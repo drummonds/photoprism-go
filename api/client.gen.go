@@ -5,10 +5,918 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
+
+// AclGrant defines model for acl.Grant.
+type AclGrant map[string]bool
+
+// AclGrants defines model for acl.Grants.
+type AclGrants map[string]AclGrant
+
+// ConfigCategoryLabel defines model for config.CategoryLabel.
+type ConfigCategoryLabel struct {
+	Name *string `json:"Name,omitempty"`
+	Slug *string `json:"Slug,omitempty"`
+	UID  *string `json:"UID,omitempty"`
+}
+
+// ConfigClientConfig defines model for config.ClientConfig.
+type ConfigClientConfig struct {
+	About            *string                `json:"about,omitempty"`
+	Acl              *AclGrants             `json:"acl,omitempty"`
+	AlbumCategories  *[]string              `json:"albumCategories,omitempty"`
+	Albums           *[]EntityAlbum         `json:"albums,omitempty"`
+	ApiUri           *string                `json:"apiUri,omitempty"`
+	AppColor         *string                `json:"appColor,omitempty"`
+	AppIcon          *string                `json:"appIcon,omitempty"`
+	AppMode          *string                `json:"appMode,omitempty"`
+	AppName          *string                `json:"appName,omitempty"`
+	AuthMode         *string                `json:"authMode,omitempty"`
+	BaseUri          *string                `json:"baseUri,omitempty"`
+	Cameras          *[]EntityCamera        `json:"cameras,omitempty"`
+	Categories       *[]ConfigCategoryLabel `json:"categories,omitempty"`
+	Clip             *int                   `json:"clip,omitempty"`
+	Colors           *[]map[string]string   `json:"colors,omitempty"`
+	ContentUri       *string                `json:"contentUri,omitempty"`
+	Copyright        *string                `json:"copyright,omitempty"`
+	Count            *ConfigClientCounts    `json:"count,omitempty"`
+	Countries        *[]EntityCountry       `json:"countries,omitempty"`
+	CssUri           *string                `json:"cssUri,omitempty"`
+	Customer         *string                `json:"customer,omitempty"`
+	Debug            *bool                  `json:"debug,omitempty"`
+	Demo             *bool                  `json:"demo,omitempty"`
+	Disable          *ConfigClientDisable   `json:"disable,omitempty"`
+	DownloadToken    *string                `json:"downloadToken,omitempty"`
+	Edition          *string                `json:"edition,omitempty"`
+	Experimental     *bool                  `json:"experimental,omitempty"`
+	Ext              *ConfigMap             `json:"ext,omitempty"`
+	Flags            *string                `json:"flags,omitempty"`
+	JsUri            *string                `json:"jsUri,omitempty"`
+	LegalInfo        *string                `json:"legalInfo,omitempty"`
+	LegalUrl         *string                `json:"legalUrl,omitempty"`
+	Lenses           *[]EntityLens          `json:"lenses,omitempty"`
+	LoginUri         *string                `json:"loginUri,omitempty"`
+	ManifestUri      *string                `json:"manifestUri,omitempty"`
+	MapKey           *string                `json:"mapKey,omitempty"`
+	Membership       *string                `json:"membership,omitempty"`
+	Mode             *string                `json:"mode,omitempty"`
+	Name             *string                `json:"name,omitempty"`
+	PasswordLength   *int                   `json:"passwordLength,omitempty"`
+	PasswordResetUri *string                `json:"passwordResetUri,omitempty"`
+	People           *[]EntityPerson        `json:"people,omitempty"`
+	Pos              *ConfigClientPosition  `json:"pos,omitempty"`
+	PreviewToken     *string                `json:"previewToken,omitempty"`
+	Public           *bool                  `json:"public,omitempty"`
+	Readonly         *bool                  `json:"readonly,omitempty"`
+	RegisterUri      *string                `json:"registerUri,omitempty"`
+	Restart          *bool                  `json:"restart,omitempty"`
+	Server           *EnvResources          `json:"server,omitempty"`
+	Settings         *CustomizeSettings     `json:"settings,omitempty"`
+	SiteAuthor       *string                `json:"siteAuthor,omitempty"`
+	SiteCaption      *string                `json:"siteCaption,omitempty"`
+	SiteDescription  *string                `json:"siteDescription,omitempty"`
+	SiteDomain       *string                `json:"siteDomain,omitempty"`
+	SitePreview      *string                `json:"sitePreview,omitempty"`
+	SiteTitle        *string                `json:"siteTitle,omitempty"`
+	SiteUrl          *string                `json:"siteUrl,omitempty"`
+	Sponsor          *bool                  `json:"sponsor,omitempty"`
+	StaticUri        *string                `json:"staticUri,omitempty"`
+	Test             *bool                  `json:"test,omitempty"`
+	Thumbs           *[]ConfigThumbSize     `json:"thumbs,omitempty"`
+	Tier             *int                   `json:"tier,omitempty"`
+	Trace            *bool                  `json:"trace,omitempty"`
+	UploadNSFW       *bool                  `json:"uploadNSFW,omitempty"`
+	UsersPath        *string                `json:"usersPath,omitempty"`
+	Version          *string                `json:"version,omitempty"`
+	VideoUri         *string                `json:"videoUri,omitempty"`
+	WallpaperUri     *string                `json:"wallpaperUri,omitempty"`
+	Years            *[]int                 `json:"years,omitempty"`
+}
+
+// ConfigClientCounts defines model for config.ClientCounts.
+type ConfigClientCounts struct {
+	Albums         *int `json:"albums,omitempty"`
+	All            *int `json:"all,omitempty"`
+	Archived       *int `json:"archived,omitempty"`
+	Cameras        *int `json:"cameras,omitempty"`
+	Countries      *int `json:"countries,omitempty"`
+	Favorites      *int `json:"favorites,omitempty"`
+	Files          *int `json:"files,omitempty"`
+	Folders        *int `json:"folders,omitempty"`
+	Hidden         *int `json:"hidden,omitempty"`
+	LabelMaxPhotos *int `json:"labelMaxPhotos,omitempty"`
+	Labels         *int `json:"labels,omitempty"`
+	Lenses         *int `json:"lenses,omitempty"`
+	Live           *int `json:"live,omitempty"`
+	Moments        *int `json:"moments,omitempty"`
+	Months         *int `json:"months,omitempty"`
+	People         *int `json:"people,omitempty"`
+	Photos         *int `json:"photos,omitempty"`
+	Places         *int `json:"places,omitempty"`
+	Private        *int `json:"private,omitempty"`
+	PrivateAlbums  *int `json:"private_albums,omitempty"`
+	PrivateFolders *int `json:"private_folders,omitempty"`
+	PrivateMoments *int `json:"private_moments,omitempty"`
+	PrivateMonths  *int `json:"private_months,omitempty"`
+	PrivateStates  *int `json:"private_states,omitempty"`
+	Review         *int `json:"review,omitempty"`
+	States         *int `json:"states,omitempty"`
+	Stories        *int `json:"stories,omitempty"`
+	Videos         *int `json:"videos,omitempty"`
+}
+
+// ConfigClientDisable defines model for config.ClientDisable.
+type ConfigClientDisable struct {
+	Backups        *bool `json:"backups,omitempty"`
+	Classification *bool `json:"classification,omitempty"`
+	Darktable      *bool `json:"darktable,omitempty"`
+	Exiftool       *bool `json:"exiftool,omitempty"`
+	Faces          *bool `json:"faces,omitempty"`
+	Ffmpeg         *bool `json:"ffmpeg,omitempty"`
+	Heifconvert    *bool `json:"heifconvert,omitempty"`
+	Imagemagick    *bool `json:"imagemagick,omitempty"`
+	Jpegxl         *bool `json:"jpegxl,omitempty"`
+	Places         *bool `json:"places,omitempty"`
+	Raw            *bool `json:"raw,omitempty"`
+	Rawtherapee    *bool `json:"rawtherapee,omitempty"`
+	Restart        *bool `json:"restart,omitempty"`
+	Settings       *bool `json:"settings,omitempty"`
+	Sips           *bool `json:"sips,omitempty"`
+	Tensorflow     *bool `json:"tensorflow,omitempty"`
+	Vectors        *bool `json:"vectors,omitempty"`
+	Vips           *bool `json:"vips,omitempty"`
+	Webdav         *bool `json:"webdav,omitempty"`
+}
+
+// ConfigClientPosition defines model for config.ClientPosition.
+type ConfigClientPosition struct {
+	Cid *string  `json:"cid,omitempty"`
+	Lat *float32 `json:"lat,omitempty"`
+	Lng *float32 `json:"lng,omitempty"`
+	Uid *string  `json:"uid,omitempty"`
+	Utc *string  `json:"utc,omitempty"`
+}
+
+// ConfigMap defines model for config.Map.
+type ConfigMap map[string]interface{}
+
+// ConfigOptions defines model for config.Options.
+type ConfigOptions struct {
+	AppColor              *string       `json:"AppColor,omitempty"`
+	AppIcon               *string       `json:"AppIcon,omitempty"`
+	AppMode               *string       `json:"AppMode,omitempty"`
+	AppName               *string       `json:"AppName,omitempty"`
+	AutoImport            *int          `json:"AutoImport,omitempty"`
+	AutoIndex             *int          `json:"AutoIndex,omitempty"`
+	BackupAlbums          *bool         `json:"BackupAlbums,omitempty"`
+	BackupDatabase        *bool         `json:"BackupDatabase,omitempty"`
+	BackupRetain          *int          `json:"BackupRetain,omitempty"`
+	BackupSchedule        *string       `json:"BackupSchedule,omitempty"`
+	CdnUrl                *string       `json:"CdnUrl,omitempty"`
+	CdnVideo              *bool         `json:"CdnVideo,omitempty"`
+	Debug                 *bool         `json:"Debug,omitempty"`
+	DefaultLocale         *string       `json:"DefaultLocale,omitempty"`
+	DefaultTLS            *bool         `json:"DefaultTLS,omitempty"`
+	DefaultTheme          *string       `json:"DefaultTheme,omitempty"`
+	DefaultTimezone       *string       `json:"DefaultTimezone,omitempty"`
+	DetectNSFW            *bool         `json:"DetectNSFW,omitempty"`
+	DisableBackups        *bool         `json:"DisableBackups,omitempty"`
+	DisableClassification *bool         `json:"DisableClassification,omitempty"`
+	DisableDarktable      *bool         `json:"DisableDarktable,omitempty"`
+	DisableExifTool       *bool         `json:"DisableExifTool,omitempty"`
+	DisableFFmpeg         *bool         `json:"DisableFFmpeg,omitempty"`
+	DisableFaces          *bool         `json:"DisableFaces,omitempty"`
+	DisableHeifConvert    *bool         `json:"DisableHeifConvert,omitempty"`
+	DisableImageMagick    *bool         `json:"DisableImageMagick,omitempty"`
+	DisableJpegXL         *bool         `json:"DisableJpegXL,omitempty"`
+	DisableOIDC           *bool         `json:"DisableOIDC,omitempty"`
+	DisablePlaces         *bool         `json:"DisablePlaces,omitempty"`
+	DisableRaw            *bool         `json:"DisableRaw,omitempty"`
+	DisableRawTherapee    *bool         `json:"DisableRawTherapee,omitempty"`
+	DisableSips           *bool         `json:"DisableSips,omitempty"`
+	DisableTLS            *bool         `json:"DisableTLS,omitempty"`
+	DisableTensorFlow     *bool         `json:"DisableTensorFlow,omitempty"`
+	DisableVectors        *bool         `json:"DisableVectors,omitempty"`
+	DisableVips           *bool         `json:"DisableVips,omitempty"`
+	DisableWebDAV         *bool         `json:"DisableWebDAV,omitempty"`
+	ExifBruteForce        *bool         `json:"ExifBruteForce,omitempty"`
+	Experimental          *bool         `json:"Experimental,omitempty"`
+	FFmpegBitrate         *int          `json:"FFmpegBitrate,omitempty"`
+	FFmpegEncoder         *string       `json:"FFmpegEncoder,omitempty"`
+	FFmpegMapAudio        *string       `json:"FFmpegMapAudio,omitempty"`
+	FFmpegMapVideo        *string       `json:"FFmpegMapVideo,omitempty"`
+	FFmpegSize            *int          `json:"FFmpegSize,omitempty"`
+	HttpCacheMaxAge       *int          `json:"HttpCacheMaxAge,omitempty"`
+	HttpCachePublic       *bool         `json:"HttpCachePublic,omitempty"`
+	HttpVideoMaxAge       *int          `json:"HttpVideoMaxAge,omitempty"`
+	HttpsProxy            *string       `json:"HttpsProxy,omitempty"`
+	HttpsProxyInsecure    *bool         `json:"HttpsProxyInsecure,omitempty"`
+	IndexSchedule         *string       `json:"IndexSchedule,omitempty"`
+	IndexWorkers          *int          `json:"IndexWorkers,omitempty"`
+	JpegQuality           *int          `json:"JpegQuality,omitempty"`
+	JpegSize              *int          `json:"JpegSize,omitempty"`
+	LegalInfo             *string       `json:"LegalInfo,omitempty"`
+	LegalUrl              *string       `json:"LegalUrl,omitempty"`
+	OIDCIcon              *string       `json:"OIDCIcon,omitempty"`
+	OIDCProvider          *string       `json:"OIDCProvider,omitempty"`
+	OIDCRedirect          *bool         `json:"OIDCRedirect,omitempty"`
+	OIDCRegister          *bool         `json:"OIDCRegister,omitempty"`
+	OriginalsLimit        *int          `json:"OriginalsLimit,omitempty"`
+	PngSize               *int          `json:"PngSize,omitempty"`
+	Prod                  *bool         `json:"Prod,omitempty"`
+	RawPresets            *bool         `json:"RawPresets,omitempty"`
+	ReadOnly              *bool         `json:"ReadOnly,omitempty"`
+	ResolutionLimit       *int          `json:"ResolutionLimit,omitempty"`
+	SidecarYaml           *bool         `json:"SidecarYaml,omitempty"`
+	SiteAuthor            *string       `json:"SiteAuthor,omitempty"`
+	SiteCaption           *string       `json:"SiteCaption,omitempty"`
+	SiteDescription       *string       `json:"SiteDescription,omitempty"`
+	SitePreview           *string       `json:"SitePreview,omitempty"`
+	SiteTitle             *string       `json:"SiteTitle,omitempty"`
+	SiteUrl               *string       `json:"SiteUrl,omitempty"`
+	TLSCert               *string       `json:"TLSCert,omitempty"`
+	TLSEmail              *string       `json:"TLSEmail,omitempty"`
+	TLSKey                *string       `json:"TLSKey,omitempty"`
+	Test                  *bool         `json:"Test,omitempty"`
+	ThumbColor            *string       `json:"ThumbColor,omitempty"`
+	ThumbFilter           *string       `json:"ThumbFilter,omitempty"`
+	ThumbLibrary          *string       `json:"ThumbLibrary,omitempty"`
+	ThumbSize             *int          `json:"ThumbSize,omitempty"`
+	ThumbSizeUncached     *int          `json:"ThumbSizeUncached,omitempty"`
+	ThumbUncached         *bool         `json:"ThumbUncached,omitempty"`
+	Trace                 *bool         `json:"Trace,omitempty"`
+	WakeupInterval        *TimeDuration `json:"WakeupInterval,omitempty"`
+	WallpaperUri          *string       `json:"WallpaperUri,omitempty"`
+}
+
+// ConfigThumbSize defines model for config.ThumbSize.
+type ConfigThumbSize struct {
+	H     *int    `json:"h,omitempty"`
+	Size  *string `json:"size,omitempty"`
+	Usage *string `json:"usage,omitempty"`
+	W     *int    `json:"w,omitempty"`
+}
+
+// CustomizeDownloadName defines model for customize.DownloadName.
+type CustomizeDownloadName = string
+
+// CustomizeDownloadSettings defines model for customize.DownloadSettings.
+type CustomizeDownloadSettings struct {
+	Disabled     *bool                  `json:"disabled,omitempty"`
+	MediaRaw     *bool                  `json:"mediaRaw,omitempty"`
+	MediaSidecar *bool                  `json:"mediaSidecar,omitempty"`
+	Name         *CustomizeDownloadName `json:"name,omitempty"`
+	Originals    *bool                  `json:"originals,omitempty"`
+}
+
+// CustomizeFeatureSettings defines model for customize.FeatureSettings.
+type CustomizeFeatureSettings struct {
+	Account   *bool `json:"account,omitempty"`
+	Albums    *bool `json:"albums,omitempty"`
+	Archive   *bool `json:"archive,omitempty"`
+	Delete    *bool `json:"delete,omitempty"`
+	Download  *bool `json:"download,omitempty"`
+	Edit      *bool `json:"edit,omitempty"`
+	Estimates *bool `json:"estimates,omitempty"`
+	Favorites *bool `json:"favorites,omitempty"`
+	Files     *bool `json:"files,omitempty"`
+	Folders   *bool `json:"folders,omitempty"`
+	Import    *bool `json:"import,omitempty"`
+	Labels    *bool `json:"labels,omitempty"`
+	Library   *bool `json:"library,omitempty"`
+	Logs      *bool `json:"logs,omitempty"`
+	Moments   *bool `json:"moments,omitempty"`
+	People    *bool `json:"people,omitempty"`
+	Places    *bool `json:"places,omitempty"`
+	Private   *bool `json:"private,omitempty"`
+	Ratings   *bool `json:"ratings,omitempty"`
+	Reactions *bool `json:"reactions,omitempty"`
+	Review    *bool `json:"review,omitempty"`
+	Search    *bool `json:"search,omitempty"`
+	Services  *bool `json:"services,omitempty"`
+	Settings  *bool `json:"settings,omitempty"`
+	Share     *bool `json:"share,omitempty"`
+	Upload    *bool `json:"upload,omitempty"`
+	Videos    *bool `json:"videos,omitempty"`
+}
+
+// CustomizeImportSettings defines model for customize.ImportSettings.
+type CustomizeImportSettings struct {
+	Move *bool   `json:"move,omitempty"`
+	Path *string `json:"path,omitempty"`
+}
+
+// CustomizeIndexSettings defines model for customize.IndexSettings.
+type CustomizeIndexSettings struct {
+	Convert      *bool   `json:"convert,omitempty"`
+	Path         *string `json:"path,omitempty"`
+	Rescan       *bool   `json:"rescan,omitempty"`
+	SkipArchived *bool   `json:"skipArchived,omitempty"`
+}
+
+// CustomizeMapsSettings defines model for customize.MapsSettings.
+type CustomizeMapsSettings struct {
+	Animate *int    `json:"animate,omitempty"`
+	Style   *string `json:"style,omitempty"`
+}
+
+// CustomizeSearchSettings defines model for customize.SearchSettings.
+type CustomizeSearchSettings struct {
+	BatchSize *int `json:"batchSize,omitempty"`
+}
+
+// CustomizeSettings defines model for customize.Settings.
+type CustomizeSettings struct {
+	Download  *CustomizeDownloadSettings `json:"download,omitempty"`
+	Features  *CustomizeFeatureSettings  `json:"features,omitempty"`
+	Import    *CustomizeImportSettings   `json:"import,omitempty"`
+	Index     *CustomizeIndexSettings    `json:"index,omitempty"`
+	Maps      *CustomizeMapsSettings     `json:"maps,omitempty"`
+	Search    *CustomizeSearchSettings   `json:"search,omitempty"`
+	Share     *CustomizeShareSettings    `json:"share,omitempty"`
+	Stack     *CustomizeStackSettings    `json:"stack,omitempty"`
+	Templates *CustomizeTemplateSettings `json:"templates,omitempty"`
+	Ui        *CustomizeUISettings       `json:"ui,omitempty"`
+}
+
+// CustomizeShareSettings defines model for customize.ShareSettings.
+type CustomizeShareSettings struct {
+	Title *string `json:"title,omitempty"`
+}
+
+// CustomizeStackSettings defines model for customize.StackSettings.
+type CustomizeStackSettings struct {
+	Meta *bool `json:"meta,omitempty"`
+	Name *bool `json:"name,omitempty"`
+	Uuid *bool `json:"uuid,omitempty"`
+}
+
+// CustomizeTemplateSettings defines model for customize.TemplateSettings.
+type CustomizeTemplateSettings struct {
+	Default *string `json:"default,omitempty"`
+}
+
+// CustomizeUISettings defines model for customize.UISettings.
+type CustomizeUISettings struct {
+	Language  *string `json:"language,omitempty"`
+	Scrollbar *bool   `json:"scrollbar,omitempty"`
+	Theme     *string `json:"theme,omitempty"`
+	TimeZone  *string `json:"timeZone,omitempty"`
+	Zoom      *bool   `json:"zoom,omitempty"`
+}
+
+// EntityAlbum defines model for entity.Album.
+type EntityAlbum struct {
+	Caption     *string `json:"Caption,omitempty"`
+	Category    *string `json:"Category,omitempty"`
+	Country     *string `json:"Country,omitempty"`
+	CreatedAt   *string `json:"CreatedAt,omitempty"`
+	CreatedBy   *string `json:"CreatedBy,omitempty"`
+	Day         *int    `json:"Day,omitempty"`
+	DeletedAt   *string `json:"DeletedAt,omitempty"`
+	Description *string `json:"Description,omitempty"`
+	Favorite    *bool   `json:"Favorite,omitempty"`
+	Filter      *string `json:"Filter,omitempty"`
+	ID          *int    `json:"ID,omitempty"`
+	Location    *string `json:"Location,omitempty"`
+	Month       *int    `json:"Month,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Order       *string `json:"Order,omitempty"`
+	ParentUID   *string `json:"ParentUID,omitempty"`
+	Path        *string `json:"Path,omitempty"`
+	Private     *bool   `json:"Private,omitempty"`
+	PublishedAt *string `json:"PublishedAt,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+	State       *string `json:"State,omitempty"`
+	Template    *string `json:"Template,omitempty"`
+	Thumb       *string `json:"Thumb,omitempty"`
+	ThumbSrc    *string `json:"ThumbSrc,omitempty"`
+	Title       *string `json:"Title,omitempty"`
+	Type        *string `json:"Type,omitempty"`
+	UID         *string `json:"UID,omitempty"`
+	UpdatedAt   *string `json:"UpdatedAt,omitempty"`
+	Year        *int    `json:"Year,omitempty"`
+}
+
+// EntityCamera defines model for entity.Camera.
+type EntityCamera struct {
+	Description *string `json:"Description,omitempty"`
+	ID          *int    `json:"ID,omitempty"`
+	Make        *string `json:"Make,omitempty"`
+	Model       *string `json:"Model,omitempty"`
+	Name        *string `json:"Name,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+	Type        *string `json:"Type,omitempty"`
+}
+
+// EntityCell defines model for entity.Cell.
+type EntityCell struct {
+	Category  *string      `json:"Category,omitempty"`
+	CreatedAt *string      `json:"CreatedAt,omitempty"`
+	ID        *string      `json:"ID,omitempty"`
+	Name      *string      `json:"Name,omitempty"`
+	Place     *EntityPlace `json:"Place,omitempty"`
+	Postcode  *string      `json:"Postcode,omitempty"`
+	Street    *string      `json:"Street,omitempty"`
+	UpdatedAt *string      `json:"UpdatedAt,omitempty"`
+}
+
+// EntityCountry defines model for entity.Country.
+type EntityCountry struct {
+	Description *string `json:"Description,omitempty"`
+	ID          *string `json:"ID,omitempty"`
+	Name        *string `json:"Name,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+}
+
+// EntityDetails defines model for entity.Details.
+type EntityDetails struct {
+	Artist       *string `json:"Artist,omitempty"`
+	ArtistSrc    *string `json:"ArtistSrc,omitempty"`
+	Copyright    *string `json:"Copyright,omitempty"`
+	CopyrightSrc *string `json:"CopyrightSrc,omitempty"`
+	Keywords     *string `json:"Keywords,omitempty"`
+	KeywordsSrc  *string `json:"KeywordsSrc,omitempty"`
+	License      *string `json:"License,omitempty"`
+	LicenseSrc   *string `json:"LicenseSrc,omitempty"`
+	Notes        *string `json:"Notes,omitempty"`
+	NotesSrc     *string `json:"NotesSrc,omitempty"`
+	Software     *string `json:"Software,omitempty"`
+	SoftwareSrc  *string `json:"SoftwareSrc,omitempty"`
+	Subject      *string `json:"Subject,omitempty"`
+	SubjectSrc   *string `json:"SubjectSrc,omitempty"`
+	CreatedAt    *string `json:"createdAt,omitempty"`
+	PhotoID      *int    `json:"photoID,omitempty"`
+	UpdatedAt    *string `json:"updatedAt,omitempty"`
+}
+
+// EntityFile defines model for entity.File.
+type EntityFile struct {
+	AspectRatio    *float32      `json:"AspectRatio,omitempty"`
+	Chroma         *int          `json:"Chroma,omitempty"`
+	Codec          *string       `json:"Codec,omitempty"`
+	ColorProfile   *string       `json:"ColorProfile,omitempty"`
+	Colors         *string       `json:"Colors,omitempty"`
+	CreatedAt      *string       `json:"CreatedAt,omitempty"`
+	CreatedIn      *int          `json:"CreatedIn,omitempty"`
+	DeletedAt      *string       `json:"DeletedAt,omitempty"`
+	Diff           *int          `json:"Diff,omitempty"`
+	Duration       *TimeDuration `json:"Duration,omitempty"`
+	Error          *string       `json:"Error,omitempty"`
+	FPS            *float32      `json:"FPS,omitempty"`
+	FileType       *string       `json:"FileType,omitempty"`
+	Frames         *int          `json:"Frames,omitempty"`
+	HDR            *bool         `json:"HDR,omitempty"`
+	Hash           *string       `json:"Hash,omitempty"`
+	Height         *int          `json:"Height,omitempty"`
+	InstanceID     *string       `json:"InstanceID,omitempty"`
+	Luminance      *string       `json:"Luminance,omitempty"`
+	MainColor      *string       `json:"MainColor,omitempty"`
+	MediaID        *string       `json:"MediaID,omitempty"`
+	MediaType      *string       `json:"MediaType,omitempty"`
+	MediaUTC       *int          `json:"MediaUTC,omitempty"`
+	Mime           *string       `json:"Mime,omitempty"`
+	Missing        *bool         `json:"Missing,omitempty"`
+	ModTime        *int          `json:"ModTime,omitempty"`
+	Name           *string       `json:"Name,omitempty"`
+	Orientation    *int          `json:"Orientation,omitempty"`
+	OrientationSrc *string       `json:"OrientationSrc,omitempty"`
+	OriginalName   *string       `json:"OriginalName,omitempty"`
+	PhotoUID       *string       `json:"PhotoUID,omitempty"`
+	Portrait       *bool         `json:"Portrait,omitempty"`
+	Primary        *bool         `json:"Primary,omitempty"`
+	Projection     *string       `json:"Projection,omitempty"`
+	PublishedAt    *string       `json:"PublishedAt,omitempty"`
+	Root           *string       `json:"Root,omitempty"`
+	Sidecar        *bool         `json:"Sidecar,omitempty"`
+	Size           *int          `json:"Size,omitempty"`
+	Software       *string       `json:"Software,omitempty"`
+	TakenAt        *string       `json:"TakenAt,omitempty"`
+	TimeIndex      *string       `json:"TimeIndex,omitempty"`
+	UID            *string       `json:"UID,omitempty"`
+	UpdatedAt      *string       `json:"UpdatedAt,omitempty"`
+	UpdatedIn      *int          `json:"UpdatedIn,omitempty"`
+	Video          *bool         `json:"Video,omitempty"`
+	Watermark      *bool         `json:"Watermark,omitempty"`
+	Width          *int          `json:"Width,omitempty"`
+}
+
+// EntityLabel defines model for entity.Label.
+type EntityLabel struct {
+	CreatedAt   *string `json:"CreatedAt,omitempty"`
+	CustomSlug  *string `json:"CustomSlug,omitempty"`
+	DeletedAt   *string `json:"DeletedAt,omitempty"`
+	Description *string `json:"Description,omitempty"`
+	Favorite    *bool   `json:"Favorite,omitempty"`
+	ID          *int    `json:"ID,omitempty"`
+	Name        *string `json:"Name,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	PhotoCount  *int    `json:"PhotoCount,omitempty"`
+	Priority    *int    `json:"Priority,omitempty"`
+	PublishedAt *string `json:"PublishedAt,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+	Thumb       *string `json:"Thumb,omitempty"`
+	ThumbSrc    *string `json:"ThumbSrc,omitempty"`
+	UID         *string `json:"UID,omitempty"`
+	UpdatedAt   *string `json:"UpdatedAt,omitempty"`
+}
+
+// EntityLens defines model for entity.Lens.
+type EntityLens struct {
+	Description *string `json:"Description,omitempty"`
+	ID          *int    `json:"ID,omitempty"`
+	Make        *string `json:"Make,omitempty"`
+	Model       *string `json:"Model,omitempty"`
+	Name        *string `json:"Name,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+	Type        *string `json:"Type,omitempty"`
+}
+
+// EntityPerson defines model for entity.Person.
+type EntityPerson struct {
+	Alias    *string `json:"Alias,omitempty"`
+	Favorite *bool   `json:"Favorite,omitempty"`
+	Hidden   *bool   `json:"Hidden,omitempty"`
+	Name     *string `json:"Name,omitempty"`
+	UID      *string `json:"UID,omitempty"`
+}
+
+// EntityPhoto defines model for entity.Photo.
+type EntityPhoto struct {
+	Albums         *[]EntityAlbum      `json:"Albums,omitempty"`
+	Altitude       *int                `json:"Altitude,omitempty"`
+	Camera         *EntityCamera       `json:"Camera,omitempty"`
+	CameraID       *int                `json:"CameraID,omitempty"`
+	CameraSerial   *string             `json:"CameraSerial,omitempty"`
+	CameraSrc      *string             `json:"CameraSrc,omitempty"`
+	Cell           *EntityCell         `json:"Cell,omitempty"`
+	CellAccuracy   *int                `json:"CellAccuracy,omitempty"`
+	CellID         *string             `json:"CellID,omitempty"`
+	Color          *int                `json:"Color,omitempty"`
+	Country        *string             `json:"Country,omitempty"`
+	CreatedBy      *string             `json:"CreatedBy,omitempty"`
+	Day            *int                `json:"Day,omitempty"`
+	Description    *string             `json:"Description,omitempty"`
+	DescriptionSrc *string             `json:"DescriptionSrc,omitempty"`
+	Details        *EntityDetails      `json:"Details,omitempty"`
+	DocumentID     *string             `json:"DocumentID,omitempty"`
+	Duration       *TimeDuration       `json:"Duration,omitempty"`
+	EstimatedAt    *string             `json:"EstimatedAt,omitempty"`
+	Exposure       *string             `json:"Exposure,omitempty"`
+	FNumber        *float32            `json:"FNumber,omitempty"`
+	Faces          *int                `json:"Faces,omitempty"`
+	Favorite       *bool               `json:"Favorite,omitempty"`
+	FocalLength    *int                `json:"FocalLength,omitempty"`
+	Iso            *int                `json:"Iso,omitempty"`
+	Lat            *float32            `json:"Lat,omitempty"`
+	Lens           *EntityLens         `json:"Lens,omitempty"`
+	LensID         *int                `json:"LensID,omitempty"`
+	Lng            *float32            `json:"Lng,omitempty"`
+	Month          *int                `json:"Month,omitempty"`
+	Name           *string             `json:"Name,omitempty"`
+	OriginalName   *string             `json:"OriginalName,omitempty"`
+	Panorama       *bool               `json:"Panorama,omitempty"`
+	Path           *string             `json:"Path,omitempty"`
+	Place          *EntityPlace        `json:"Place,omitempty"`
+	PlaceID        *string             `json:"PlaceID,omitempty"`
+	PlaceSrc       *string             `json:"PlaceSrc,omitempty"`
+	Private        *bool               `json:"Private,omitempty"`
+	PublishedAt    *string             `json:"PublishedAt,omitempty"`
+	Quality        *int                `json:"Quality,omitempty"`
+	Resolution     *int                `json:"Resolution,omitempty"`
+	Scan           *bool               `json:"Scan,omitempty"`
+	Stack          *int                `json:"Stack,omitempty"`
+	TakenAt        *string             `json:"TakenAt,omitempty"`
+	TakenAtLocal   *string             `json:"TakenAtLocal,omitempty"`
+	TakenSrc       *string             `json:"TakenSrc,omitempty"`
+	TimeZone       *string             `json:"TimeZone,omitempty"`
+	Title          *string             `json:"Title,omitempty"`
+	TitleSrc       *string             `json:"TitleSrc,omitempty"`
+	Type           *string             `json:"Type,omitempty"`
+	TypeSrc        *string             `json:"TypeSrc,omitempty"`
+	UID            *string             `json:"UID,omitempty"`
+	Year           *int                `json:"Year,omitempty"`
+	CheckedAt      *string             `json:"checkedAt,omitempty"`
+	CreatedAt      *string             `json:"createdAt,omitempty"`
+	DeletedAt      *string             `json:"deletedAt,omitempty"`
+	EditedAt       *string             `json:"editedAt,omitempty"`
+	Files          *[]EntityFile       `json:"files,omitempty"`
+	Id             *int                `json:"id,omitempty"`
+	Labels         *[]EntityPhotoLabel `json:"labels,omitempty"`
+	UpdatedAt      *string             `json:"updatedAt,omitempty"`
+}
+
+// EntityPhotoLabel defines model for entity.PhotoLabel.
+type EntityPhotoLabel struct {
+	Label       *EntityLabel `json:"label,omitempty"`
+	LabelID     *int         `json:"labelID,omitempty"`
+	LabelSrc    *string      `json:"labelSrc,omitempty"`
+	Photo       *EntityPhoto `json:"photo,omitempty"`
+	PhotoID     *int         `json:"photoID,omitempty"`
+	Uncertainty *int         `json:"uncertainty,omitempty"`
+}
+
+// EntityPlace defines model for entity.Place.
+type EntityPlace struct {
+	City       *string `json:"City,omitempty"`
+	Country    *string `json:"Country,omitempty"`
+	CreatedAt  *string `json:"CreatedAt,omitempty"`
+	District   *string `json:"District,omitempty"`
+	Favorite   *bool   `json:"Favorite,omitempty"`
+	Keywords   *string `json:"Keywords,omitempty"`
+	Label      *string `json:"Label,omitempty"`
+	PhotoCount *int    `json:"PhotoCount,omitempty"`
+	PlaceID    *string `json:"PlaceID,omitempty"`
+	State      *string `json:"State,omitempty"`
+	UpdatedAt  *string `json:"UpdatedAt,omitempty"`
+}
+
+// EnvResources defines model for env.Resources.
+type EnvResources struct {
+	Cores  *int `json:"cores,omitempty"`
+	Memory *struct {
+		Free     *int    `json:"free,omitempty"`
+		Info     *string `json:"info,omitempty"`
+		Reserved *int    `json:"reserved,omitempty"`
+		Total    *int    `json:"total,omitempty"`
+		Used     *int    `json:"used,omitempty"`
+	} `json:"memory,omitempty"`
+	Routines *int `json:"routines,omitempty"`
+}
+
+// FormAlbum defines model for form.Album.
+type FormAlbum struct {
+	Caption     *string `json:"Caption,omitempty"`
+	Category    *string `json:"Category,omitempty"`
+	Country     *string `json:"Country,omitempty"`
+	Description *string `json:"Description,omitempty"`
+	Favorite    *bool   `json:"Favorite,omitempty"`
+	Filter      *string `json:"Filter,omitempty"`
+	Location    *string `json:"Location,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Order       *string `json:"Order,omitempty"`
+	Private     *bool   `json:"Private,omitempty"`
+	Template    *string `json:"Template,omitempty"`
+	Thumb       *string `json:"Thumb,omitempty"`
+	ThumbSrc    *string `json:"ThumbSrc,omitempty"`
+	Title       *string `json:"Title,omitempty"`
+	Type        *string `json:"Type,omitempty"`
+}
+
+// FormDetails defines model for form.Details.
+type FormDetails struct {
+	Artist       *string `json:"Artist,omitempty"`
+	ArtistSrc    *string `json:"ArtistSrc,omitempty"`
+	Copyright    *string `json:"Copyright,omitempty"`
+	CopyrightSrc *string `json:"CopyrightSrc,omitempty"`
+	Keywords     *string `json:"Keywords,omitempty"`
+	KeywordsSrc  *string `json:"KeywordsSrc,omitempty"`
+	License      *string `json:"License,omitempty"`
+	LicenseSrc   *string `json:"LicenseSrc,omitempty"`
+	Notes        *string `json:"Notes,omitempty"`
+	NotesSrc     *string `json:"NotesSrc,omitempty"`
+	PhotoID      *int    `json:"PhotoID,omitempty"`
+	Subject      *string `json:"Subject,omitempty"`
+	SubjectSrc   *string `json:"SubjectSrc,omitempty"`
+}
+
+// FormLabel defines model for form.Label.
+type FormLabel struct {
+	Name        *string `json:"Name,omitempty"`
+	Priority    *int    `json:"Priority,omitempty"`
+	Uncertainty *int    `json:"Uncertainty,omitempty"`
+}
+
+// FormPhoto defines model for form.Photo.
+type FormPhoto struct {
+	Altitude       *int         `json:"Altitude,omitempty"`
+	CameraID       *int         `json:"CameraID,omitempty"`
+	CameraSrc      *string      `json:"CameraSrc,omitempty"`
+	CellAccuracy   *int         `json:"CellAccuracy,omitempty"`
+	CellID         *string      `json:"CellID,omitempty"`
+	Country        *string      `json:"Country,omitempty"`
+	Day            *int         `json:"Day,omitempty"`
+	Description    *string      `json:"Description,omitempty"`
+	DescriptionSrc *string      `json:"DescriptionSrc,omitempty"`
+	Details        *FormDetails `json:"Details,omitempty"`
+	Exposure       *string      `json:"Exposure,omitempty"`
+	FNumber        *float32     `json:"FNumber,omitempty"`
+	Favorite       *bool        `json:"Favorite,omitempty"`
+	FocalLength    *int         `json:"FocalLength,omitempty"`
+	Iso            *int         `json:"Iso,omitempty"`
+	Lat            *float32     `json:"Lat,omitempty"`
+	LensID         *int         `json:"LensID,omitempty"`
+	Lng            *float32     `json:"Lng,omitempty"`
+	Month          *int         `json:"Month,omitempty"`
+	OriginalName   *string      `json:"OriginalName,omitempty"`
+	Panorama       *bool        `json:"Panorama,omitempty"`
+	PlaceID        *string      `json:"PlaceID,omitempty"`
+	PlaceSrc       *string      `json:"PlaceSrc,omitempty"`
+	Private        *bool        `json:"Private,omitempty"`
+	Scan           *bool        `json:"Scan,omitempty"`
+	Stack          *int         `json:"Stack,omitempty"`
+	TakenAt        *string      `json:"TakenAt,omitempty"`
+	TakenAtLocal   *string      `json:"TakenAtLocal,omitempty"`
+	TakenSrc       *string      `json:"TakenSrc,omitempty"`
+	TimeZone       *string      `json:"TimeZone,omitempty"`
+	Title          *string      `json:"Title,omitempty"`
+	TitleSrc       *string      `json:"TitleSrc,omitempty"`
+	Type           *string      `json:"Type,omitempty"`
+	TypeSrc        *string      `json:"TypeSrc,omitempty"`
+	Year           *int         `json:"Year,omitempty"`
+}
+
+// FormSelection defines model for form.Selection.
+type FormSelection struct {
+	Albums   *[]string `json:"albums,omitempty"`
+	All      *bool     `json:"all,omitempty"`
+	Files    *[]string `json:"files,omitempty"`
+	Labels   *[]string `json:"labels,omitempty"`
+	Photos   *[]string `json:"photos,omitempty"`
+	Places   *[]string `json:"places,omitempty"`
+	Subjects *[]string `json:"subjects,omitempty"`
+}
+
+// GinH defines model for gin.H.
+type GinH map[string]map[string]interface{}
+
+// I18nResponse defines model for i18n.Response.
+type I18nResponse struct {
+	Code    *int    `json:"code,omitempty"`
+	Details *string `json:"details,omitempty"`
+	Error   *string `json:"error,omitempty"`
+	Message *string `json:"message,omitempty"`
+}
+
+// SearchAlbum defines model for search.Album.
+type SearchAlbum struct {
+	Caption     *string `json:"Caption,omitempty"`
+	Category    *string `json:"Category,omitempty"`
+	Country     *string `json:"Country,omitempty"`
+	CreatedAt   *string `json:"CreatedAt,omitempty"`
+	Day         *int    `json:"Day,omitempty"`
+	DeletedAt   *string `json:"DeletedAt,omitempty"`
+	Description *string `json:"Description,omitempty"`
+	Favorite    *bool   `json:"Favorite,omitempty"`
+	Filter      *string `json:"Filter,omitempty"`
+	LinkCount   *int    `json:"LinkCount,omitempty"`
+	Location    *string `json:"Location,omitempty"`
+	Month       *int    `json:"Month,omitempty"`
+	Notes       *string `json:"Notes,omitempty"`
+	Order       *string `json:"Order,omitempty"`
+	ParentUID   *string `json:"ParentUID,omitempty"`
+	Path        *string `json:"Path,omitempty"`
+	PhotoCount  *int    `json:"PhotoCount,omitempty"`
+	Private     *bool   `json:"Private,omitempty"`
+	Slug        *string `json:"Slug,omitempty"`
+	State       *string `json:"State,omitempty"`
+	Template    *string `json:"Template,omitempty"`
+	Thumb       *string `json:"Thumb,omitempty"`
+	ThumbSrc    *string `json:"ThumbSrc,omitempty"`
+	Title       *string `json:"Title,omitempty"`
+	Type        *string `json:"Type,omitempty"`
+	UID         *string `json:"UID,omitempty"`
+	UpdatedAt   *string `json:"UpdatedAt,omitempty"`
+	Year        *int    `json:"Year,omitempty"`
+}
+
+// SearchPhoto defines model for search.Photo.
+type SearchPhoto struct {
+	Altitude *int `json:"Altitude,omitempty"`
+
+	// CameraID Camera
+	CameraID     *int    `json:"CameraID,omitempty"`
+	CameraMake   *string `json:"CameraMake,omitempty"`
+	CameraModel  *string `json:"CameraModel,omitempty"`
+	CameraSerial *string `json:"CameraSerial,omitempty"`
+	CameraSrc    *string `json:"CameraSrc,omitempty"`
+	CellAccuracy *int    `json:"CellAccuracy,omitempty"`
+
+	// CellID Cell
+	CellID      *string       `json:"CellID,omitempty"`
+	CheckedAt   *string       `json:"CheckedAt,omitempty"`
+	Color       *int          `json:"Color,omitempty"`
+	Country     *string       `json:"Country,omitempty"`
+	CreatedAt   *string       `json:"CreatedAt,omitempty"`
+	Day         *int          `json:"Day,omitempty"`
+	DeletedAt   *string       `json:"DeletedAt,omitempty"`
+	Description *string       `json:"Description,omitempty"`
+	DocumentID  *string       `json:"DocumentID,omitempty"`
+	Duration    *TimeDuration `json:"Duration,omitempty"`
+	EditedAt    *string       `json:"EditedAt,omitempty"`
+	Exposure    *string       `json:"Exposure,omitempty"`
+	FNumber     *float32      `json:"FNumber,omitempty"`
+	Faces       *int          `json:"Faces,omitempty"`
+	Favorite    *bool         `json:"Favorite,omitempty"`
+	FileName    *string       `json:"FileName,omitempty"`
+	FileRoot    *string       `json:"FileRoot,omitempty"`
+	FileUID     *string       `json:"FileUID,omitempty"`
+	Files       *[]EntityFile `json:"Files,omitempty"`
+	FocalLength *int          `json:"FocalLength,omitempty"`
+	Hash        *string       `json:"Hash,omitempty"`
+	Height      *int          `json:"Height,omitempty"`
+	ID          *string       `json:"ID,omitempty"`
+	InstanceID  *string       `json:"InstanceID,omitempty"`
+	Iso         *int          `json:"Iso,omitempty"`
+	Lat         *float32      `json:"Lat,omitempty"`
+
+	// LensID Lens
+	LensID       *int     `json:"LensID,omitempty"`
+	LensMake     *string  `json:"LensMake,omitempty"`
+	LensModel    *string  `json:"LensModel,omitempty"`
+	Lng          *float32 `json:"Lng,omitempty"`
+	Merged       *bool    `json:"Merged,omitempty"`
+	Month        *int     `json:"Month,omitempty"`
+	Name         *string  `json:"Name,omitempty"`
+	OriginalName *string  `json:"OriginalName,omitempty"`
+	Panorama     *bool    `json:"Panorama,omitempty"`
+	Path         *string  `json:"Path,omitempty"`
+	PlaceCity    *string  `json:"PlaceCity,omitempty"`
+	PlaceCountry *string  `json:"PlaceCountry,omitempty"`
+	PlaceID      *string  `json:"PlaceID,omitempty"`
+	PlaceLabel   *string  `json:"PlaceLabel,omitempty"`
+	PlaceSrc     *string  `json:"PlaceSrc,omitempty"`
+	PlaceState   *string  `json:"PlaceState,omitempty"`
+	Portrait     *bool    `json:"Portrait,omitempty"`
+	Private      *bool    `json:"Private,omitempty"`
+	Quality      *int     `json:"Quality,omitempty"`
+	Resolution   *int     `json:"Resolution,omitempty"`
+	Scan         *bool    `json:"Scan,omitempty"`
+	Stack        *int     `json:"Stack,omitempty"`
+	TakenAt      *string  `json:"TakenAt,omitempty"`
+	TakenAtLocal *string  `json:"TakenAtLocal,omitempty"`
+	TakenSrc     *string  `json:"TakenSrc,omitempty"`
+	TimeZone     *string  `json:"TimeZone,omitempty"`
+	Title        *string  `json:"Title,omitempty"`
+	Type         *string  `json:"Type,omitempty"`
+	TypeSrc      *string  `json:"TypeSrc,omitempty"`
+	UID          *string  `json:"UID,omitempty"`
+	UpdatedAt    *string  `json:"UpdatedAt,omitempty"`
+	Width        *int     `json:"Width,omitempty"`
+	Year         *int     `json:"Year,omitempty"`
+}
+
+// TimeDuration defines model for time.Duration.
+type TimeDuration = int
+
+// SearchAlbumsParams defines parameters for SearchAlbums.
+type SearchAlbumsParams struct {
+	// Count maximum number of results
+	Count int `form:"count" json:"count"`
+
+	// Offset search result offset
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Order sort order
+	Order *string `form:"order,omitempty" json:"order,omitempty"`
+
+	// Q search query
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+}
+
+// SearchPhotosParams defines parameters for SearchPhotos.
+type SearchPhotosParams struct {
+	// Count maximum number of files
+	Count int `form:"count" json:"count"`
+
+	// Offset file offset
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Order sort order
+	Order *string `form:"order,omitempty" json:"order,omitempty"`
+
+	// Merged groups consecutive files that belong to the same photo
+	Merged *bool `form:"merged,omitempty" json:"merged,omitempty"`
+
+	// Public excludes private pictures
+	Public *bool `form:"public,omitempty" json:"public,omitempty"`
+
+	// Quality minimum quality score (1-7)
+	Quality int `form:"quality" json:"quality"`
+
+	// Q search query
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+
+	// S album uid
+	S *string `form:"s,omitempty" json:"s,omitempty"`
+
+	// Path photo path
+	Path *string `form:"path,omitempty" json:"path,omitempty"`
+
+	// Video is type video
+	Video *bool `form:"video,omitempty" json:"video,omitempty"`
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -83,6 +991,1760 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// SearchAlbums request
+	SearchAlbums(ctx context.Context, params *SearchAlbumsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateAlbumWithBody request with any body
+	CreateAlbumWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeleteAlbum request
+	DeleteAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetAlbum request
+	GetAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateAlbumWithBody request with any body
+	UpdateAlbumWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CloneAlbumsWithBody request with any body
+	CloneAlbumsWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DownloadAlbum request
+	DownloadAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DislikeAlbum request
+	DislikeAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LikeAlbum request
+	LikeAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AddPhotosToAlbumWithBody request with any body
+	AddPhotosToAlbumWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// AlbumCover request
+	AlbumCover(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchAlbumsDeleteWithBody request with any body
+	BatchAlbumsDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchLabelsDeleteWithBody request with any body
+	BatchLabelsDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchPhotosApproveWithBody request with any body
+	BatchPhotosApproveWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchPhotosArchiveWithBody request with any body
+	BatchPhotosArchiveWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchPhotosDeleteWithBody request with any body
+	BatchPhotosDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchPhotosPrivateWithBody request with any body
+	BatchPhotosPrivateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BatchPhotosRestoreWithBody request with any body
+	BatchPhotosRestoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetClientConfig request
+	GetClientConfig(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetConfigOptions request
+	GetConfigOptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveConfigOptions request
+	SaveConfigOptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDownload request
+	GetDownload(ctx context.Context, hash string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateLabelWithBody request with any body
+	UpdateLabelWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DislikeLabel request
+	DislikeLabel(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LikeLabel request
+	LikeLabel(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LabelCover request
+	LabelCover(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SearchPhotos request
+	SearchPhotos(ctx context.Context, params *SearchPhotosParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPhoto request
+	GetPhoto(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdatePhotoWithBody request with any body
+	UpdatePhotoWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSettings request
+	GetSettings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SaveSettings request
+	SaveSettings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetThumb request
+	GetThumb(ctx context.Context, thumb string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) SearchAlbums(ctx context.Context, params *SearchAlbumsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchAlbumsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateAlbumWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateAlbumRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteAlbumRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetAlbumRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateAlbumWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateAlbumRequestWithBody(c.Server, uid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CloneAlbumsWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCloneAlbumsRequestWithBody(c.Server, uid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DownloadAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDownloadAlbumRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DislikeAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDislikeAlbumRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) LikeAlbum(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLikeAlbumRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AddPhotosToAlbumWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAddPhotosToAlbumRequestWithBody(c.Server, uid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) AlbumCover(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAlbumCoverRequest(c.Server, uid, token, size)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchAlbumsDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchAlbumsDeleteRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchLabelsDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchLabelsDeleteRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchPhotosApproveWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchPhotosApproveRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchPhotosArchiveWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchPhotosArchiveRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchPhotosDeleteWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchPhotosDeleteRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchPhotosPrivateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchPhotosPrivateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BatchPhotosRestoreWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBatchPhotosRestoreRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetClientConfig(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetClientConfigRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetConfigOptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetConfigOptionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SaveConfigOptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveConfigOptionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDownload(ctx context.Context, hash string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDownloadRequest(c.Server, hash)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateLabelWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateLabelRequestWithBody(c.Server, uid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DislikeLabel(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDislikeLabelRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) LikeLabel(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLikeLabelRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) LabelCover(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLabelCoverRequest(c.Server, uid, token, size)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SearchPhotos(ctx context.Context, params *SearchPhotosParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSearchPhotosRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetPhoto(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPhotoRequest(c.Server, uid)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePhotoWithBody(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePhotoRequestWithBody(c.Server, uid, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetSettings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSettingsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SaveSettings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSaveSettingsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetThumb(ctx context.Context, thumb string, token string, size string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetThumbRequest(c.Server, thumb, token, size)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// NewSearchAlbumsRequest generates requests for SearchAlbums
+func NewSearchAlbumsRequest(server string, params *SearchAlbumsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "count", runtime.ParamLocationQuery, params.Count); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "order", runtime.ParamLocationQuery, *params.Order); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Q != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, *params.Q); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateAlbumRequestWithBody generates requests for CreateAlbum with any type of body
+func NewCreateAlbumRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDeleteAlbumRequest generates requests for DeleteAlbum
+func NewDeleteAlbumRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetAlbumRequest generates requests for GetAlbum
+func NewGetAlbumRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateAlbumRequestWithBody generates requests for UpdateAlbum with any type of body
+func NewUpdateAlbumRequestWithBody(server string, uid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCloneAlbumsRequestWithBody generates requests for CloneAlbums with any type of body
+func NewCloneAlbumsRequestWithBody(server string, uid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/clone", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDownloadAlbumRequest generates requests for DownloadAlbum
+func NewDownloadAlbumRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/dl", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewDislikeAlbumRequest generates requests for DislikeAlbum
+func NewDislikeAlbumRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/like", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewLikeAlbumRequest generates requests for LikeAlbum
+func NewLikeAlbumRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/like", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAddPhotosToAlbumRequestWithBody generates requests for AddPhotosToAlbum with any type of body
+func NewAddPhotosToAlbumRequestWithBody(server string, uid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/photos", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewAlbumCoverRequest generates requests for AlbumCover
+func NewAlbumCoverRequest(server string, uid string, token string, size string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "token", runtime.ParamLocationPath, token)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "size", runtime.ParamLocationPath, size)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/albums/%s/t/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewBatchAlbumsDeleteRequestWithBody generates requests for BatchAlbumsDelete with any type of body
+func NewBatchAlbumsDeleteRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/albums/delete")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchLabelsDeleteRequestWithBody generates requests for BatchLabelsDelete with any type of body
+func NewBatchLabelsDeleteRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/labels/delete")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchPhotosApproveRequestWithBody generates requests for BatchPhotosApprove with any type of body
+func NewBatchPhotosApproveRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/photos/approve")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchPhotosArchiveRequestWithBody generates requests for BatchPhotosArchive with any type of body
+func NewBatchPhotosArchiveRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/photos/archive")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchPhotosDeleteRequestWithBody generates requests for BatchPhotosDelete with any type of body
+func NewBatchPhotosDeleteRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/photos/delete")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchPhotosPrivateRequestWithBody generates requests for BatchPhotosPrivate with any type of body
+func NewBatchPhotosPrivateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/photos/private")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewBatchPhotosRestoreRequestWithBody generates requests for BatchPhotosRestore with any type of body
+func NewBatchPhotosRestoreRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/batch/photos/restore")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetClientConfigRequest generates requests for GetClientConfig
+func NewGetClientConfigRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/config")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetConfigOptionsRequest generates requests for GetConfigOptions
+func NewGetConfigOptionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/config/options")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveConfigOptionsRequest generates requests for SaveConfigOptions
+func NewSaveConfigOptionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/config/options")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDownloadRequest generates requests for GetDownload
+func NewGetDownloadRequest(server string, hash string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "hash", runtime.ParamLocationPath, hash)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/dl/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateLabelRequestWithBody generates requests for UpdateLabel with any type of body
+func NewUpdateLabelRequestWithBody(server string, uid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/labels/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDislikeLabelRequest generates requests for DislikeLabel
+func NewDislikeLabelRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/labels/%s/like", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewLikeLabelRequest generates requests for LikeLabel
+func NewLikeLabelRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/labels/%s/like", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewLabelCoverRequest generates requests for LabelCover
+func NewLabelCoverRequest(server string, uid string, token string, size string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "token", runtime.ParamLocationPath, token)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "size", runtime.ParamLocationPath, size)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/labels/%s/t/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSearchPhotosRequest generates requests for SearchPhotos
+func NewSearchPhotosRequest(server string, params *SearchPhotosParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/photos")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "count", runtime.ParamLocationQuery, params.Count); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.Offset != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Order != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "order", runtime.ParamLocationQuery, *params.Order); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Merged != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "merged", runtime.ParamLocationQuery, *params.Merged); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Public != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "public", runtime.ParamLocationQuery, *params.Public); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "quality", runtime.ParamLocationQuery, params.Quality); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.Q != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "q", runtime.ParamLocationQuery, *params.Q); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.S != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "s", runtime.ParamLocationQuery, *params.S); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Path != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "path", runtime.ParamLocationQuery, *params.Path); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Video != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "video", runtime.ParamLocationQuery, *params.Video); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetPhotoRequest generates requests for GetPhoto
+func NewGetPhotoRequest(server string, uid string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/photos/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdatePhotoRequestWithBody generates requests for UpdatePhoto with any type of body
+func NewUpdatePhotoRequestWithBody(server string, uid string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "uid", runtime.ParamLocationPath, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/photos/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetSettingsRequest generates requests for GetSettings
+func NewGetSettingsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/settings")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewSaveSettingsRequest generates requests for SaveSettings
+func NewSaveSettingsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/settings")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetThumbRequest generates requests for GetThumb
+func NewGetThumbRequest(server string, thumb string, token string, size string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "thumb", runtime.ParamLocationPath, thumb)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "token", runtime.ParamLocationPath, token)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithLocation("simple", false, "size", runtime.ParamLocationPath, size)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/api/v1/t/%s/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
@@ -128,4 +2790,2764 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// SearchAlbumsWithResponse request
+	SearchAlbumsWithResponse(ctx context.Context, params *SearchAlbumsParams, reqEditors ...RequestEditorFn) (*SearchAlbumsResponse, error)
+
+	// CreateAlbumWithBodyWithResponse request with any body
+	CreateAlbumWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAlbumResponse, error)
+
+	// DeleteAlbumWithResponse request
+	DeleteAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DeleteAlbumResponse, error)
+
+	// GetAlbumWithResponse request
+	GetAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*GetAlbumResponse, error)
+
+	// UpdateAlbumWithBodyWithResponse request with any body
+	UpdateAlbumWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAlbumResponse, error)
+
+	// CloneAlbumsWithBodyWithResponse request with any body
+	CloneAlbumsWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CloneAlbumsResponse, error)
+
+	// DownloadAlbumWithResponse request
+	DownloadAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DownloadAlbumResponse, error)
+
+	// DislikeAlbumWithResponse request
+	DislikeAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DislikeAlbumResponse, error)
+
+	// LikeAlbumWithResponse request
+	LikeAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*LikeAlbumResponse, error)
+
+	// AddPhotosToAlbumWithBodyWithResponse request with any body
+	AddPhotosToAlbumWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPhotosToAlbumResponse, error)
+
+	// AlbumCoverWithResponse request
+	AlbumCoverWithResponse(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*AlbumCoverResponse, error)
+
+	// BatchAlbumsDeleteWithBodyWithResponse request with any body
+	BatchAlbumsDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchAlbumsDeleteResponse, error)
+
+	// BatchLabelsDeleteWithBodyWithResponse request with any body
+	BatchLabelsDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchLabelsDeleteResponse, error)
+
+	// BatchPhotosApproveWithBodyWithResponse request with any body
+	BatchPhotosApproveWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosApproveResponse, error)
+
+	// BatchPhotosArchiveWithBodyWithResponse request with any body
+	BatchPhotosArchiveWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosArchiveResponse, error)
+
+	// BatchPhotosDeleteWithBodyWithResponse request with any body
+	BatchPhotosDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosDeleteResponse, error)
+
+	// BatchPhotosPrivateWithBodyWithResponse request with any body
+	BatchPhotosPrivateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosPrivateResponse, error)
+
+	// BatchPhotosRestoreWithBodyWithResponse request with any body
+	BatchPhotosRestoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosRestoreResponse, error)
+
+	// GetClientConfigWithResponse request
+	GetClientConfigWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClientConfigResponse, error)
+
+	// GetConfigOptionsWithResponse request
+	GetConfigOptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetConfigOptionsResponse, error)
+
+	// SaveConfigOptionsWithResponse request
+	SaveConfigOptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SaveConfigOptionsResponse, error)
+
+	// GetDownloadWithResponse request
+	GetDownloadWithResponse(ctx context.Context, hash string, reqEditors ...RequestEditorFn) (*GetDownloadResponse, error)
+
+	// UpdateLabelWithBodyWithResponse request with any body
+	UpdateLabelWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLabelResponse, error)
+
+	// DislikeLabelWithResponse request
+	DislikeLabelWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DislikeLabelResponse, error)
+
+	// LikeLabelWithResponse request
+	LikeLabelWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*LikeLabelResponse, error)
+
+	// LabelCoverWithResponse request
+	LabelCoverWithResponse(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*LabelCoverResponse, error)
+
+	// SearchPhotosWithResponse request
+	SearchPhotosWithResponse(ctx context.Context, params *SearchPhotosParams, reqEditors ...RequestEditorFn) (*SearchPhotosResponse, error)
+
+	// GetPhotoWithResponse request
+	GetPhotoWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*GetPhotoResponse, error)
+
+	// UpdatePhotoWithBodyWithResponse request with any body
+	UpdatePhotoWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePhotoResponse, error)
+
+	// GetSettingsWithResponse request
+	GetSettingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSettingsResponse, error)
+
+	// SaveSettingsWithResponse request
+	SaveSettingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SaveSettingsResponse, error)
+
+	// GetThumbWithResponse request
+	GetThumbWithResponse(ctx context.Context, thumb string, token string, size string, reqEditors ...RequestEditorFn) (*GetThumbResponse, error)
+}
+
+type SearchAlbumsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]SearchAlbum
+	JSON400      *I18nResponse
+	JSON404      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchAlbumsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchAlbumsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityAlbum
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityAlbum
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityAlbum
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CloneAlbumsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GinH
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r CloneAlbumsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CloneAlbumsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DownloadAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r DownloadAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DownloadAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DislikeAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DislikeAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DislikeAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type LikeAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r LikeAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LikeAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AddPhotosToAlbumResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GinH
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r AddPhotosToAlbumResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AddPhotosToAlbumResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AlbumCoverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r AlbumCoverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AlbumCoverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchAlbumsDeleteResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchAlbumsDeleteResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchAlbumsDeleteResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchLabelsDeleteResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchLabelsDeleteResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchLabelsDeleteResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchPhotosApproveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchPhotosApproveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchPhotosApproveResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchPhotosArchiveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchPhotosArchiveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchPhotosArchiveResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchPhotosDeleteResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchPhotosDeleteResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchPhotosDeleteResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchPhotosPrivateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchPhotosPrivateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchPhotosPrivateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BatchPhotosRestoreResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *I18nResponse
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r BatchPhotosRestoreResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BatchPhotosRestoreResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetClientConfigResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ConfigClientConfig
+}
+
+// Status returns HTTPResponse.Status
+func (r GetClientConfigResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetClientConfigResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetConfigOptionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ConfigOptions
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetConfigOptionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetConfigOptionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SaveConfigOptionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ConfigOptions
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveConfigOptionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveConfigOptionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetDownloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDownloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDownloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateLabelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityLabel
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateLabelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateLabelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DislikeLabelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DislikeLabelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DislikeLabelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type LikeLabelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r LikeLabelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LikeLabelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type LabelCoverResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r LabelCoverResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LabelCoverResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SearchPhotosResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]SearchPhoto
+	JSON400      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SearchPhotosResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SearchPhotosResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetPhotoResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityPhoto
+	JSON404      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPhotoResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPhotoResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdatePhotoResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EntityPhoto
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON429      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdatePhotoResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdatePhotoResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetSettingsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomizeSettings
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSettingsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSettingsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SaveSettingsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CustomizeSettings
+	JSON400      *I18nResponse
+	JSON401      *I18nResponse
+	JSON403      *I18nResponse
+	JSON404      *I18nResponse
+	JSON500      *I18nResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r SaveSettingsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SaveSettingsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetThumbResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetThumbResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetThumbResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// SearchAlbumsWithResponse request returning *SearchAlbumsResponse
+func (c *ClientWithResponses) SearchAlbumsWithResponse(ctx context.Context, params *SearchAlbumsParams, reqEditors ...RequestEditorFn) (*SearchAlbumsResponse, error) {
+	rsp, err := c.SearchAlbums(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchAlbumsResponse(rsp)
+}
+
+// CreateAlbumWithBodyWithResponse request with arbitrary body returning *CreateAlbumResponse
+func (c *ClientWithResponses) CreateAlbumWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateAlbumResponse, error) {
+	rsp, err := c.CreateAlbumWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateAlbumResponse(rsp)
+}
+
+// DeleteAlbumWithResponse request returning *DeleteAlbumResponse
+func (c *ClientWithResponses) DeleteAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DeleteAlbumResponse, error) {
+	rsp, err := c.DeleteAlbum(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteAlbumResponse(rsp)
+}
+
+// GetAlbumWithResponse request returning *GetAlbumResponse
+func (c *ClientWithResponses) GetAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*GetAlbumResponse, error) {
+	rsp, err := c.GetAlbum(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetAlbumResponse(rsp)
+}
+
+// UpdateAlbumWithBodyWithResponse request with arbitrary body returning *UpdateAlbumResponse
+func (c *ClientWithResponses) UpdateAlbumWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateAlbumResponse, error) {
+	rsp, err := c.UpdateAlbumWithBody(ctx, uid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateAlbumResponse(rsp)
+}
+
+// CloneAlbumsWithBodyWithResponse request with arbitrary body returning *CloneAlbumsResponse
+func (c *ClientWithResponses) CloneAlbumsWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CloneAlbumsResponse, error) {
+	rsp, err := c.CloneAlbumsWithBody(ctx, uid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCloneAlbumsResponse(rsp)
+}
+
+// DownloadAlbumWithResponse request returning *DownloadAlbumResponse
+func (c *ClientWithResponses) DownloadAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DownloadAlbumResponse, error) {
+	rsp, err := c.DownloadAlbum(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDownloadAlbumResponse(rsp)
+}
+
+// DislikeAlbumWithResponse request returning *DislikeAlbumResponse
+func (c *ClientWithResponses) DislikeAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DislikeAlbumResponse, error) {
+	rsp, err := c.DislikeAlbum(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDislikeAlbumResponse(rsp)
+}
+
+// LikeAlbumWithResponse request returning *LikeAlbumResponse
+func (c *ClientWithResponses) LikeAlbumWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*LikeAlbumResponse, error) {
+	rsp, err := c.LikeAlbum(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLikeAlbumResponse(rsp)
+}
+
+// AddPhotosToAlbumWithBodyWithResponse request with arbitrary body returning *AddPhotosToAlbumResponse
+func (c *ClientWithResponses) AddPhotosToAlbumWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPhotosToAlbumResponse, error) {
+	rsp, err := c.AddPhotosToAlbumWithBody(ctx, uid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAddPhotosToAlbumResponse(rsp)
+}
+
+// AlbumCoverWithResponse request returning *AlbumCoverResponse
+func (c *ClientWithResponses) AlbumCoverWithResponse(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*AlbumCoverResponse, error) {
+	rsp, err := c.AlbumCover(ctx, uid, token, size, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAlbumCoverResponse(rsp)
+}
+
+// BatchAlbumsDeleteWithBodyWithResponse request with arbitrary body returning *BatchAlbumsDeleteResponse
+func (c *ClientWithResponses) BatchAlbumsDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchAlbumsDeleteResponse, error) {
+	rsp, err := c.BatchAlbumsDeleteWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchAlbumsDeleteResponse(rsp)
+}
+
+// BatchLabelsDeleteWithBodyWithResponse request with arbitrary body returning *BatchLabelsDeleteResponse
+func (c *ClientWithResponses) BatchLabelsDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchLabelsDeleteResponse, error) {
+	rsp, err := c.BatchLabelsDeleteWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchLabelsDeleteResponse(rsp)
+}
+
+// BatchPhotosApproveWithBodyWithResponse request with arbitrary body returning *BatchPhotosApproveResponse
+func (c *ClientWithResponses) BatchPhotosApproveWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosApproveResponse, error) {
+	rsp, err := c.BatchPhotosApproveWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchPhotosApproveResponse(rsp)
+}
+
+// BatchPhotosArchiveWithBodyWithResponse request with arbitrary body returning *BatchPhotosArchiveResponse
+func (c *ClientWithResponses) BatchPhotosArchiveWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosArchiveResponse, error) {
+	rsp, err := c.BatchPhotosArchiveWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchPhotosArchiveResponse(rsp)
+}
+
+// BatchPhotosDeleteWithBodyWithResponse request with arbitrary body returning *BatchPhotosDeleteResponse
+func (c *ClientWithResponses) BatchPhotosDeleteWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosDeleteResponse, error) {
+	rsp, err := c.BatchPhotosDeleteWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchPhotosDeleteResponse(rsp)
+}
+
+// BatchPhotosPrivateWithBodyWithResponse request with arbitrary body returning *BatchPhotosPrivateResponse
+func (c *ClientWithResponses) BatchPhotosPrivateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosPrivateResponse, error) {
+	rsp, err := c.BatchPhotosPrivateWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchPhotosPrivateResponse(rsp)
+}
+
+// BatchPhotosRestoreWithBodyWithResponse request with arbitrary body returning *BatchPhotosRestoreResponse
+func (c *ClientWithResponses) BatchPhotosRestoreWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BatchPhotosRestoreResponse, error) {
+	rsp, err := c.BatchPhotosRestoreWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBatchPhotosRestoreResponse(rsp)
+}
+
+// GetClientConfigWithResponse request returning *GetClientConfigResponse
+func (c *ClientWithResponses) GetClientConfigWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClientConfigResponse, error) {
+	rsp, err := c.GetClientConfig(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetClientConfigResponse(rsp)
+}
+
+// GetConfigOptionsWithResponse request returning *GetConfigOptionsResponse
+func (c *ClientWithResponses) GetConfigOptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetConfigOptionsResponse, error) {
+	rsp, err := c.GetConfigOptions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetConfigOptionsResponse(rsp)
+}
+
+// SaveConfigOptionsWithResponse request returning *SaveConfigOptionsResponse
+func (c *ClientWithResponses) SaveConfigOptionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SaveConfigOptionsResponse, error) {
+	rsp, err := c.SaveConfigOptions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveConfigOptionsResponse(rsp)
+}
+
+// GetDownloadWithResponse request returning *GetDownloadResponse
+func (c *ClientWithResponses) GetDownloadWithResponse(ctx context.Context, hash string, reqEditors ...RequestEditorFn) (*GetDownloadResponse, error) {
+	rsp, err := c.GetDownload(ctx, hash, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDownloadResponse(rsp)
+}
+
+// UpdateLabelWithBodyWithResponse request with arbitrary body returning *UpdateLabelResponse
+func (c *ClientWithResponses) UpdateLabelWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateLabelResponse, error) {
+	rsp, err := c.UpdateLabelWithBody(ctx, uid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateLabelResponse(rsp)
+}
+
+// DislikeLabelWithResponse request returning *DislikeLabelResponse
+func (c *ClientWithResponses) DislikeLabelWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*DislikeLabelResponse, error) {
+	rsp, err := c.DislikeLabel(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDislikeLabelResponse(rsp)
+}
+
+// LikeLabelWithResponse request returning *LikeLabelResponse
+func (c *ClientWithResponses) LikeLabelWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*LikeLabelResponse, error) {
+	rsp, err := c.LikeLabel(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLikeLabelResponse(rsp)
+}
+
+// LabelCoverWithResponse request returning *LabelCoverResponse
+func (c *ClientWithResponses) LabelCoverWithResponse(ctx context.Context, uid string, token string, size string, reqEditors ...RequestEditorFn) (*LabelCoverResponse, error) {
+	rsp, err := c.LabelCover(ctx, uid, token, size, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLabelCoverResponse(rsp)
+}
+
+// SearchPhotosWithResponse request returning *SearchPhotosResponse
+func (c *ClientWithResponses) SearchPhotosWithResponse(ctx context.Context, params *SearchPhotosParams, reqEditors ...RequestEditorFn) (*SearchPhotosResponse, error) {
+	rsp, err := c.SearchPhotos(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSearchPhotosResponse(rsp)
+}
+
+// GetPhotoWithResponse request returning *GetPhotoResponse
+func (c *ClientWithResponses) GetPhotoWithResponse(ctx context.Context, uid string, reqEditors ...RequestEditorFn) (*GetPhotoResponse, error) {
+	rsp, err := c.GetPhoto(ctx, uid, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPhotoResponse(rsp)
+}
+
+// UpdatePhotoWithBodyWithResponse request with arbitrary body returning *UpdatePhotoResponse
+func (c *ClientWithResponses) UpdatePhotoWithBodyWithResponse(ctx context.Context, uid string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePhotoResponse, error) {
+	rsp, err := c.UpdatePhotoWithBody(ctx, uid, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePhotoResponse(rsp)
+}
+
+// GetSettingsWithResponse request returning *GetSettingsResponse
+func (c *ClientWithResponses) GetSettingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSettingsResponse, error) {
+	rsp, err := c.GetSettings(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSettingsResponse(rsp)
+}
+
+// SaveSettingsWithResponse request returning *SaveSettingsResponse
+func (c *ClientWithResponses) SaveSettingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*SaveSettingsResponse, error) {
+	rsp, err := c.SaveSettings(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSaveSettingsResponse(rsp)
+}
+
+// GetThumbWithResponse request returning *GetThumbResponse
+func (c *ClientWithResponses) GetThumbWithResponse(ctx context.Context, thumb string, token string, size string, reqEditors ...RequestEditorFn) (*GetThumbResponse, error) {
+	rsp, err := c.GetThumb(ctx, thumb, token, size, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetThumbResponse(rsp)
+}
+
+// ParseSearchAlbumsResponse parses an HTTP response from a SearchAlbumsWithResponse call
+func ParseSearchAlbumsResponse(rsp *http.Response) (*SearchAlbumsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchAlbumsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []SearchAlbum
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateAlbumResponse parses an HTTP response from a CreateAlbumWithResponse call
+func ParseCreateAlbumResponse(rsp *http.Response) (*CreateAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityAlbum
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteAlbumResponse parses an HTTP response from a DeleteAlbumWithResponse call
+func ParseDeleteAlbumResponse(rsp *http.Response) (*DeleteAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetAlbumResponse parses an HTTP response from a GetAlbumWithResponse call
+func ParseGetAlbumResponse(rsp *http.Response) (*GetAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityAlbum
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateAlbumResponse parses an HTTP response from a UpdateAlbumWithResponse call
+func ParseUpdateAlbumResponse(rsp *http.Response) (*UpdateAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityAlbum
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCloneAlbumsResponse parses an HTTP response from a CloneAlbumsWithResponse call
+func ParseCloneAlbumsResponse(rsp *http.Response) (*CloneAlbumsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CloneAlbumsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GinH
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDownloadAlbumResponse parses an HTTP response from a DownloadAlbumWithResponse call
+func ParseDownloadAlbumResponse(rsp *http.Response) (*DownloadAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DownloadAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseDislikeAlbumResponse parses an HTTP response from a DislikeAlbumWithResponse call
+func ParseDislikeAlbumResponse(rsp *http.Response) (*DislikeAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DislikeAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseLikeAlbumResponse parses an HTTP response from a LikeAlbumWithResponse call
+func ParseLikeAlbumResponse(rsp *http.Response) (*LikeAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LikeAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAddPhotosToAlbumResponse parses an HTTP response from a AddPhotosToAlbumWithResponse call
+func ParseAddPhotosToAlbumResponse(rsp *http.Response) (*AddPhotosToAlbumResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AddPhotosToAlbumResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GinH
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAlbumCoverResponse parses an HTTP response from a AlbumCoverWithResponse call
+func ParseAlbumCoverResponse(rsp *http.Response) (*AlbumCoverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AlbumCoverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseBatchAlbumsDeleteResponse parses an HTTP response from a BatchAlbumsDeleteWithResponse call
+func ParseBatchAlbumsDeleteResponse(rsp *http.Response) (*BatchAlbumsDeleteResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchAlbumsDeleteResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchLabelsDeleteResponse parses an HTTP response from a BatchLabelsDeleteWithResponse call
+func ParseBatchLabelsDeleteResponse(rsp *http.Response) (*BatchLabelsDeleteResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchLabelsDeleteResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchPhotosApproveResponse parses an HTTP response from a BatchPhotosApproveWithResponse call
+func ParseBatchPhotosApproveResponse(rsp *http.Response) (*BatchPhotosApproveResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchPhotosApproveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchPhotosArchiveResponse parses an HTTP response from a BatchPhotosArchiveWithResponse call
+func ParseBatchPhotosArchiveResponse(rsp *http.Response) (*BatchPhotosArchiveResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchPhotosArchiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchPhotosDeleteResponse parses an HTTP response from a BatchPhotosDeleteWithResponse call
+func ParseBatchPhotosDeleteResponse(rsp *http.Response) (*BatchPhotosDeleteResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchPhotosDeleteResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchPhotosPrivateResponse parses an HTTP response from a BatchPhotosPrivateWithResponse call
+func ParseBatchPhotosPrivateResponse(rsp *http.Response) (*BatchPhotosPrivateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchPhotosPrivateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBatchPhotosRestoreResponse parses an HTTP response from a BatchPhotosRestoreWithResponse call
+func ParseBatchPhotosRestoreResponse(rsp *http.Response) (*BatchPhotosRestoreResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BatchPhotosRestoreResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetClientConfigResponse parses an HTTP response from a GetClientConfigWithResponse call
+func ParseGetClientConfigResponse(rsp *http.Response) (*GetClientConfigResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetClientConfigResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ConfigClientConfig
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetConfigOptionsResponse parses an HTTP response from a GetConfigOptionsWithResponse call
+func ParseGetConfigOptionsResponse(rsp *http.Response) (*GetConfigOptionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetConfigOptionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ConfigOptions
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveConfigOptionsResponse parses an HTTP response from a SaveConfigOptionsWithResponse call
+func ParseSaveConfigOptionsResponse(rsp *http.Response) (*SaveConfigOptionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveConfigOptionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ConfigOptions
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetDownloadResponse parses an HTTP response from a GetDownloadWithResponse call
+func ParseGetDownloadResponse(rsp *http.Response) (*GetDownloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDownloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseUpdateLabelResponse parses an HTTP response from a UpdateLabelWithResponse call
+func ParseUpdateLabelResponse(rsp *http.Response) (*UpdateLabelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateLabelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityLabel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDislikeLabelResponse parses an HTTP response from a DislikeLabelWithResponse call
+func ParseDislikeLabelResponse(rsp *http.Response) (*DislikeLabelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DislikeLabelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseLikeLabelResponse parses an HTTP response from a LikeLabelWithResponse call
+func ParseLikeLabelResponse(rsp *http.Response) (*LikeLabelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LikeLabelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseLabelCoverResponse parses an HTTP response from a LabelCoverWithResponse call
+func ParseLabelCoverResponse(rsp *http.Response) (*LabelCoverResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LabelCoverResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseSearchPhotosResponse parses an HTTP response from a SearchPhotosWithResponse call
+func ParseSearchPhotosResponse(rsp *http.Response) (*SearchPhotosResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SearchPhotosResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []SearchPhoto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPhotoResponse parses an HTTP response from a GetPhotoWithResponse call
+func ParseGetPhotoResponse(rsp *http.Response) (*GetPhotoResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPhotoResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityPhoto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdatePhotoResponse parses an HTTP response from a UpdatePhotoWithResponse call
+func ParseUpdatePhotoResponse(rsp *http.Response) (*UpdatePhotoResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdatePhotoResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EntityPhoto
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetSettingsResponse parses an HTTP response from a GetSettingsWithResponse call
+func ParseGetSettingsResponse(rsp *http.Response) (*GetSettingsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSettingsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomizeSettings
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSaveSettingsResponse parses an HTTP response from a SaveSettingsWithResponse call
+func ParseSaveSettingsResponse(rsp *http.Response) (*SaveSettingsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SaveSettingsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CustomizeSettings
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest I18nResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON500 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetThumbResponse parses an HTTP response from a GetThumbWithResponse call
+func ParseGetThumbResponse(rsp *http.Response) (*GetThumbResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetThumbResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
 }

@@ -1,0 +1,3099 @@
+openapi: 3.0.1
+info:
+  title: PhotoPrism API
+  description: |-
+    API request bodies and responses are usually JSON-encoded, except for binary data and some of the OAuth2 endpoints. Note that the `Content-Type` header must be set to `application/json` for this, as the request may otherwise fail with error 400.
+    When clients have a valid access token, e.g. obtained through the `POST /api/v1/session` or `POST /api/v1/oauth/token` endpoint, they can use a standard Bearer Authorization header to authenticate their requests. Submitting the access token with a custom `X-Auth-Token` header is supported as well.
+  contact: {}
+  version: v1
+externalDocs:
+  description: Learn more ›
+  url: https://docs.photoprism.app/developer-guide/api/
+servers:
+- url: //demo.photoprism.app/
+paths:
+  /api/v1/albums:
+    get:
+      tags:
+      - Albums
+      summary: finds albums and returns them as JSON
+      operationId: SearchAlbums
+      parameters:
+      - name: count
+        in: query
+        description: maximum number of results
+        required: true
+        schema:
+          maximum: 100000
+          minimum: 1
+          type: integer
+      - name: offset
+        in: query
+        description: search result offset
+        schema:
+          maximum: 100000
+          minimum: 0
+          type: integer
+      - name: order
+        in: query
+        description: sort order
+        schema:
+          type: string
+      - name: q
+        in: query
+        description: search query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/search.Album'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    post:
+      tags:
+      - Albums
+      summary: creates a new album
+      operationId: CreateAlbum
+      requestBody:
+        description: properties of the album to be created (currently supports Title
+          and Favorite)
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Album'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Album'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: album
+  /api/v1/albums/{uid}:
+    get:
+      tags:
+      - Albums
+      summary: returns album details as JSON
+      operationId: GetAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Album'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    put:
+      tags:
+      - Albums
+      summary: updates album metadata like title and description
+      operationId: UpdateAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: properties to be updated
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Album'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Album'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: album
+    delete:
+      tags:
+      - Albums
+      summary: deletes an existing album
+      operationId: Delete Album
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/albums/{uid}/clone:
+    post:
+      tags:
+      - Albums
+      summary: creates a new album containing pictures from other albums
+      operationId: CloneAlbums
+      parameters:
+      - name: uid
+        in: path
+        description: UID of the album to which the pictures are to be added
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Album Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gin.H'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: albums
+  /api/v1/albums/{uid}/dl:
+    get:
+      tags:
+      - Images
+      - Albums
+      summary: streams the album contents as zip archiv
+      operationId: DownloadAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Forbidden
+          content:
+            application/zip:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/zip:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/zip:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/albums/{uid}/like:
+    post:
+      tags:
+      - Albums
+      summary: sets the favorite flag for an album
+      operationId: LikeAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    delete:
+      tags:
+      - Albums
+      summary: removes the favorite flag from an album
+      operationId: DislikeAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/albums/{uid}/photos:
+    post:
+      tags:
+      - Albums
+      summary: adds photos to an album
+      operationId: AddPhotosToAlbum
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/gin.H'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/albums/{uid}/t/{token}/{size}:
+    get:
+      tags:
+      - Images
+      - Albums
+      summary: returns an album cover image
+      operationId: AlbumCover
+      parameters:
+      - name: uid
+        in: path
+        description: Album UID
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: path
+        description: user-specific security token provided with session or 'public'
+          when running PhotoPrism in public mode
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: path
+        description: thumbnail size
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Forbidden
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+  /api/v1/batch/albums/delete:
+    post:
+      tags:
+      - Albums
+      summary: permanently removes multiple albums
+      operationId: BatchAlbumsDelete
+      requestBody:
+        description: Album Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: albums
+  /api/v1/batch/labels/delete:
+    post:
+      tags:
+      - Labels
+      summary: deletes multiple labels
+      operationId: BatchLabelsDelete
+      requestBody:
+        description: Label Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: labels
+  /api/v1/batch/photos/approve:
+    post:
+      tags:
+      - Photos
+      summary: approves multiple photos that are currently under review
+      operationId: BatchPhotosApprove
+      requestBody:
+        description: Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/batch/photos/archive:
+    post:
+      tags:
+      - Photos
+      summary: moves multiple photos to the archive
+      operationId: BatchPhotosArchive
+      requestBody:
+        description: Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/batch/photos/delete:
+    post:
+      tags:
+      - Photos
+      summary: permanently removes multiple or all photos from the archive
+      operationId: BatchPhotosDelete
+      requestBody:
+        description: All or Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/batch/photos/private:
+    post:
+      tags:
+      - Photos
+      summary: toggles private state of multiple photos
+      operationId: BatchPhotosPrivate
+      requestBody:
+        description: Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/batch/photos/restore:
+    post:
+      tags:
+      - Photos
+      summary: restores multiple photos from the archive
+      operationId: BatchPhotosRestore
+      requestBody:
+        description: Photo Selection
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Selection'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photos
+  /api/v1/config:
+    get:
+      tags:
+      - Config
+      summary: returns the client configuration values as JSON
+      operationId: GetClientConfig
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/config.ClientConfig'
+  /api/v1/config/options:
+    get:
+      tags:
+      - Settings
+      summary: returns backend config options
+      operationId: GetConfigOptions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/config.Options'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    post:
+      tags:
+      - Settings
+      summary: updates backend config options
+      operationId: SaveConfigOptions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/config.Options'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/dl/{hash}:
+    get:
+      tags:
+      - Images
+      - Files
+      summary: returns the raw file data
+      operationId: GetDownload
+      parameters:
+      - name: hash
+        in: path
+        description: File Hash
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Forbidden
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Not Found
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /api/v1/labels/{uid}:
+    put:
+      tags:
+      - Labels
+      summary: updates label name
+      operationId: UpdateLabel
+      parameters:
+      - name: uid
+        in: path
+        description: Label UID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Label Name
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Label'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Label'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: label
+  /api/v1/labels/{uid}/like:
+    post:
+      tags:
+      - Labels
+      summary: sets favorite flag for a label
+      operationId: LikeLabel
+      parameters:
+      - name: uid
+        in: path
+        description: Label UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    delete:
+      tags:
+      - Labels
+      summary: removes favorite flag from a label
+      operationId: DislikeLabel
+      parameters:
+      - name: uid
+        in: path
+        description: Label UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/labels/{uid}/t/{token}/{size}:
+    get:
+      tags:
+      - Images
+      - Labels
+      summary: returns a label cover image
+      operationId: LabelCover
+      parameters:
+      - name: uid
+        in: path
+        description: Label UID
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: path
+        description: user-specific security token provided with session or 'public'
+          when running PhotoPrism in public mode
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: path
+        description: thumbnail size
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Forbidden
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+  /api/v1/photos:
+    get:
+      tags:
+      - Photos
+      summary: finds pictures and returns them as JSON
+      description: |-
+        Fore more information see:
+        - https://docs.photoprism.app/developer-guide/api/search/#get-apiv1photos
+      operationId: SearchPhotos
+      parameters:
+      - name: count
+        in: query
+        description: maximum number of files
+        required: true
+        schema:
+          maximum: 100000
+          minimum: 1
+          type: integer
+      - name: offset
+        in: query
+        description: file offset
+        schema:
+          maximum: 100000
+          minimum: 0
+          type: integer
+      - name: order
+        in: query
+        description: sort order
+        schema:
+          type: string
+      - name: merged
+        in: query
+        description: groups consecutive files that belong to the same photo
+        schema:
+          type: boolean
+      - name: public
+        in: query
+        description: excludes private pictures
+        schema:
+          type: boolean
+      - name: quality
+        in: query
+        description: minimum quality score (1-7)
+        required: true
+        schema:
+          type: integer
+      - name: q
+        in: query
+        description: search query
+        schema:
+          type: string
+      - name: s
+        in: query
+        description: album uid
+        schema:
+          type: string
+      - name: path
+        in: query
+        description: photo path
+        schema:
+          type: string
+      - name: video
+        in: query
+        description: is type video
+        schema:
+          type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/search.Photo'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/photos/{uid}:
+    get:
+      tags:
+      - Photos
+      summary: returns picture details as JSON
+      operationId: GetPhoto
+      parameters:
+      - name: uid
+        in: path
+        description: Photo UID
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Photo'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    put:
+      tags:
+      - Photos
+      summary: updates picture details and returns them as JSON
+      operationId: UpdatePhoto
+      parameters:
+      - name: uid
+        in: path
+        description: Photo UID
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: properties to be updated. Only submit values that should be changed.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/form.Photo'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/entity.Photo'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "429":
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+      x-codegen-request-body-name: photo
+  /api/v1/settings:
+    get:
+      tags:
+      - Settings
+      summary: returns the user app settings as JSON
+      operationId: GetSettings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/customize.Settings'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+    post:
+      tags:
+      - Settings
+      summary: saves the user app settings
+      operationId: SaveSettings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/customize.Settings'
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/i18n.Response'
+  /api/v1/t/{thumb}/{token}/{size}:
+    get:
+      tags:
+      - Images
+      - Files
+      summary: returns a thumbnail image with the requested size
+      description: |-
+        Fore more information see:
+        - https://docs.photoprism.app/developer-guide/api/thumbnails/#image-endpoint-uri
+      operationId: GetThumb
+      parameters:
+      - name: thumb
+        in: path
+        description: "SHA1 file hash, optionally with a crop area suffixed, e.g. '-016014058037'"
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: path
+        description: user-specific security token provided with session or 'public'
+          when running PhotoPrism in public mode
+        required: true
+        schema:
+          type: string
+      - name: size
+        in: path
+        description: thumbnail size
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "403":
+          description: Forbidden
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    acl.Grant:
+      type: object
+      additionalProperties:
+        type: boolean
+    acl.Grants:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/acl.Grant'
+    config.CategoryLabel:
+      type: object
+      properties:
+        Name:
+          type: string
+        Slug:
+          type: string
+        UID:
+          type: string
+    config.ClientConfig:
+      type: object
+      properties:
+        about:
+          type: string
+        acl:
+          $ref: '#/components/schemas/acl.Grants'
+        albumCategories:
+          type: array
+          items:
+            type: string
+        albums:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Album'
+        apiUri:
+          type: string
+        appColor:
+          type: string
+        appIcon:
+          type: string
+        appMode:
+          type: string
+        appName:
+          type: string
+        authMode:
+          type: string
+        baseUri:
+          type: string
+        cameras:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Camera'
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/config.CategoryLabel'
+        clip:
+          type: integer
+        colors:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+        contentUri:
+          type: string
+        copyright:
+          type: string
+        count:
+          $ref: '#/components/schemas/config.ClientCounts'
+        countries:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Country'
+        cssUri:
+          type: string
+        customer:
+          type: string
+        debug:
+          type: boolean
+        demo:
+          type: boolean
+        disable:
+          $ref: '#/components/schemas/config.ClientDisable'
+        downloadToken:
+          type: string
+        edition:
+          type: string
+        experimental:
+          type: boolean
+        ext:
+          $ref: '#/components/schemas/config.Map'
+        flags:
+          type: string
+        jsUri:
+          type: string
+        legalInfo:
+          type: string
+        legalUrl:
+          type: string
+        lenses:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Lens'
+        loginUri:
+          type: string
+        manifestUri:
+          type: string
+        mapKey:
+          type: string
+        membership:
+          type: string
+        mode:
+          type: string
+        name:
+          type: string
+        passwordLength:
+          type: integer
+        passwordResetUri:
+          type: string
+        people:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Person'
+        pos:
+          $ref: '#/components/schemas/config.ClientPosition'
+        previewToken:
+          type: string
+        public:
+          type: boolean
+        readonly:
+          type: boolean
+        registerUri:
+          type: string
+        restart:
+          type: boolean
+        server:
+          $ref: '#/components/schemas/env.Resources'
+        settings:
+          $ref: '#/components/schemas/customize.Settings'
+        siteAuthor:
+          type: string
+        siteCaption:
+          type: string
+        siteDescription:
+          type: string
+        siteDomain:
+          type: string
+        sitePreview:
+          type: string
+        siteTitle:
+          type: string
+        siteUrl:
+          type: string
+        sponsor:
+          type: boolean
+        staticUri:
+          type: string
+        test:
+          type: boolean
+        thumbs:
+          type: array
+          items:
+            $ref: '#/components/schemas/config.ThumbSize'
+        tier:
+          type: integer
+        trace:
+          type: boolean
+        uploadNSFW:
+          type: boolean
+        usersPath:
+          type: string
+        version:
+          type: string
+        videoUri:
+          type: string
+        wallpaperUri:
+          type: string
+        years:
+          type: array
+          items:
+            type: integer
+    config.ClientCounts:
+      type: object
+      properties:
+        albums:
+          type: integer
+        all:
+          type: integer
+        archived:
+          type: integer
+        cameras:
+          type: integer
+        countries:
+          type: integer
+        favorites:
+          type: integer
+        files:
+          type: integer
+        folders:
+          type: integer
+        hidden:
+          type: integer
+        labelMaxPhotos:
+          type: integer
+        labels:
+          type: integer
+        lenses:
+          type: integer
+        live:
+          type: integer
+        moments:
+          type: integer
+        months:
+          type: integer
+        people:
+          type: integer
+        photos:
+          type: integer
+        places:
+          type: integer
+        private:
+          type: integer
+        private_albums:
+          type: integer
+        private_folders:
+          type: integer
+        private_moments:
+          type: integer
+        private_months:
+          type: integer
+        private_states:
+          type: integer
+        review:
+          type: integer
+        states:
+          type: integer
+        stories:
+          type: integer
+        videos:
+          type: integer
+    config.ClientDisable:
+      type: object
+      properties:
+        backups:
+          type: boolean
+        classification:
+          type: boolean
+        darktable:
+          type: boolean
+        exiftool:
+          type: boolean
+        faces:
+          type: boolean
+        ffmpeg:
+          type: boolean
+        heifconvert:
+          type: boolean
+        imagemagick:
+          type: boolean
+        jpegxl:
+          type: boolean
+        places:
+          type: boolean
+        raw:
+          type: boolean
+        rawtherapee:
+          type: boolean
+        restart:
+          type: boolean
+        settings:
+          type: boolean
+        sips:
+          type: boolean
+        tensorflow:
+          type: boolean
+        vectors:
+          type: boolean
+        vips:
+          type: boolean
+        webdav:
+          type: boolean
+    config.ClientPosition:
+      type: object
+      properties:
+        cid:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        uid:
+          type: string
+        utc:
+          type: string
+    config.Map:
+      type: object
+      additionalProperties: true
+    config.Options:
+      type: object
+      properties:
+        AppColor:
+          type: string
+        AppIcon:
+          type: string
+        AppMode:
+          type: string
+        AppName:
+          type: string
+        AutoImport:
+          type: integer
+        AutoIndex:
+          type: integer
+        BackupAlbums:
+          type: boolean
+          default: true
+        BackupDatabase:
+          type: boolean
+          default: true
+        BackupRetain:
+          type: integer
+        BackupSchedule:
+          type: string
+        CdnUrl:
+          type: string
+        CdnVideo:
+          type: boolean
+        Debug:
+          type: boolean
+        DefaultLocale:
+          type: string
+        DefaultTLS:
+          type: boolean
+        DefaultTheme:
+          type: string
+        DefaultTimezone:
+          type: string
+        DetectNSFW:
+          type: boolean
+        DisableBackups:
+          type: boolean
+        DisableClassification:
+          type: boolean
+        DisableDarktable:
+          type: boolean
+        DisableExifTool:
+          type: boolean
+        DisableFFmpeg:
+          type: boolean
+        DisableFaces:
+          type: boolean
+        DisableHeifConvert:
+          type: boolean
+        DisableImageMagick:
+          type: boolean
+        DisableJpegXL:
+          type: boolean
+        DisableOIDC:
+          type: boolean
+        DisablePlaces:
+          type: boolean
+        DisableRaw:
+          type: boolean
+        DisableRawTherapee:
+          type: boolean
+        DisableSips:
+          type: boolean
+        DisableTLS:
+          type: boolean
+        DisableTensorFlow:
+          type: boolean
+        DisableVectors:
+          type: boolean
+        DisableVips:
+          type: boolean
+        DisableWebDAV:
+          type: boolean
+        ExifBruteForce:
+          type: boolean
+        Experimental:
+          type: boolean
+        FFmpegBitrate:
+          type: integer
+        FFmpegEncoder:
+          type: string
+        FFmpegMapAudio:
+          type: string
+        FFmpegMapVideo:
+          type: string
+        FFmpegSize:
+          type: integer
+        HttpCacheMaxAge:
+          type: integer
+        HttpCachePublic:
+          type: boolean
+        HttpVideoMaxAge:
+          type: integer
+        HttpsProxy:
+          type: string
+        HttpsProxyInsecure:
+          type: boolean
+        IndexSchedule:
+          type: string
+        IndexWorkers:
+          type: integer
+        JpegQuality:
+          type: integer
+        JpegSize:
+          type: integer
+        LegalInfo:
+          type: string
+        LegalUrl:
+          type: string
+        OIDCIcon:
+          type: string
+        OIDCProvider:
+          type: string
+        OIDCRedirect:
+          type: boolean
+        OIDCRegister:
+          type: boolean
+        OriginalsLimit:
+          type: integer
+        PngSize:
+          type: integer
+        Prod:
+          type: boolean
+        RawPresets:
+          type: boolean
+        ReadOnly:
+          type: boolean
+        ResolutionLimit:
+          type: integer
+        SidecarYaml:
+          type: boolean
+          default: true
+        SiteAuthor:
+          type: string
+        SiteCaption:
+          type: string
+        SiteDescription:
+          type: string
+        SitePreview:
+          type: string
+        SiteTitle:
+          type: string
+        SiteUrl:
+          type: string
+        TLSCert:
+          type: string
+        TLSEmail:
+          type: string
+        TLSKey:
+          type: string
+        Test:
+          type: boolean
+        ThumbColor:
+          type: string
+        ThumbFilter:
+          type: string
+        ThumbLibrary:
+          type: string
+        ThumbSize:
+          type: integer
+        ThumbSizeUncached:
+          type: integer
+        ThumbUncached:
+          type: boolean
+        Trace:
+          type: boolean
+        WakeupInterval:
+          $ref: '#/components/schemas/time.Duration'
+        WallpaperUri:
+          type: string
+    config.ThumbSize:
+      type: object
+      properties:
+        h:
+          type: integer
+        size:
+          type: string
+        usage:
+          type: string
+        w:
+          type: integer
+    customize.DownloadName:
+      type: string
+      x-enum-varnames:
+      - DownloadNameFile
+      - DownloadNameOriginal
+      - DownloadNameShare
+    customize.DownloadSettings:
+      type: object
+      properties:
+        disabled:
+          type: boolean
+        mediaRaw:
+          type: boolean
+        mediaSidecar:
+          type: boolean
+        name:
+          $ref: '#/components/schemas/customize.DownloadName'
+        originals:
+          type: boolean
+    customize.FeatureSettings:
+      type: object
+      properties:
+        account:
+          type: boolean
+        albums:
+          type: boolean
+        archive:
+          type: boolean
+        delete:
+          type: boolean
+        download:
+          type: boolean
+        edit:
+          type: boolean
+        estimates:
+          type: boolean
+        favorites:
+          type: boolean
+        files:
+          type: boolean
+        folders:
+          type: boolean
+        import:
+          type: boolean
+        labels:
+          type: boolean
+        library:
+          type: boolean
+        logs:
+          type: boolean
+        moments:
+          type: boolean
+        people:
+          type: boolean
+        places:
+          type: boolean
+        private:
+          type: boolean
+        ratings:
+          type: boolean
+        reactions:
+          type: boolean
+        review:
+          type: boolean
+        search:
+          type: boolean
+        services:
+          type: boolean
+        settings:
+          type: boolean
+        share:
+          type: boolean
+        upload:
+          type: boolean
+        videos:
+          type: boolean
+    customize.ImportSettings:
+      type: object
+      properties:
+        move:
+          type: boolean
+        path:
+          type: string
+    customize.IndexSettings:
+      type: object
+      properties:
+        convert:
+          type: boolean
+        path:
+          type: string
+        rescan:
+          type: boolean
+        skipArchived:
+          type: boolean
+    customize.MapsSettings:
+      type: object
+      properties:
+        animate:
+          type: integer
+        style:
+          type: string
+    customize.SearchSettings:
+      type: object
+      properties:
+        batchSize:
+          type: integer
+    customize.Settings:
+      type: object
+      properties:
+        download:
+          $ref: '#/components/schemas/customize.DownloadSettings'
+        features:
+          $ref: '#/components/schemas/customize.FeatureSettings'
+        import:
+          $ref: '#/components/schemas/customize.ImportSettings'
+        index:
+          $ref: '#/components/schemas/customize.IndexSettings'
+        maps:
+          $ref: '#/components/schemas/customize.MapsSettings'
+        search:
+          $ref: '#/components/schemas/customize.SearchSettings'
+        share:
+          $ref: '#/components/schemas/customize.ShareSettings'
+        stack:
+          $ref: '#/components/schemas/customize.StackSettings'
+        templates:
+          $ref: '#/components/schemas/customize.TemplateSettings'
+        ui:
+          $ref: '#/components/schemas/customize.UISettings'
+    customize.ShareSettings:
+      type: object
+      properties:
+        title:
+          type: string
+    customize.StackSettings:
+      type: object
+      properties:
+        meta:
+          type: boolean
+        name:
+          type: boolean
+        uuid:
+          type: boolean
+    customize.TemplateSettings:
+      type: object
+      properties:
+        default:
+          type: string
+    customize.UISettings:
+      type: object
+      properties:
+        language:
+          type: string
+        scrollbar:
+          type: boolean
+        theme:
+          type: string
+        timeZone:
+          type: string
+        zoom:
+          type: boolean
+    entity.Album:
+      type: object
+      properties:
+        Caption:
+          type: string
+        Category:
+          type: string
+        Country:
+          type: string
+        CreatedAt:
+          type: string
+        CreatedBy:
+          type: string
+        Day:
+          type: integer
+        DeletedAt:
+          type: string
+        Description:
+          type: string
+        Favorite:
+          type: boolean
+        Filter:
+          type: string
+        ID:
+          type: integer
+        Location:
+          type: string
+        Month:
+          type: integer
+        Notes:
+          type: string
+        Order:
+          type: string
+        ParentUID:
+          type: string
+        Path:
+          type: string
+        Private:
+          type: boolean
+        PublishedAt:
+          type: string
+        Slug:
+          type: string
+        State:
+          type: string
+        Template:
+          type: string
+        Thumb:
+          type: string
+        ThumbSrc:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+        UID:
+          type: string
+        UpdatedAt:
+          type: string
+        Year:
+          type: integer
+    entity.Camera:
+      type: object
+      properties:
+        Description:
+          type: string
+        ID:
+          type: integer
+        Make:
+          type: string
+        Model:
+          type: string
+        Name:
+          type: string
+        Notes:
+          type: string
+        Slug:
+          type: string
+        Type:
+          type: string
+    entity.Cell:
+      type: object
+      properties:
+        Category:
+          type: string
+        CreatedAt:
+          type: string
+        ID:
+          type: string
+        Name:
+          type: string
+        Place:
+          $ref: '#/components/schemas/entity.Place'
+        Postcode:
+          type: string
+        Street:
+          type: string
+        UpdatedAt:
+          type: string
+    entity.Country:
+      type: object
+      properties:
+        Description:
+          type: string
+        ID:
+          type: string
+        Name:
+          type: string
+        Notes:
+          type: string
+        Slug:
+          type: string
+    entity.Details:
+      type: object
+      properties:
+        Artist:
+          type: string
+        ArtistSrc:
+          type: string
+        Copyright:
+          type: string
+        CopyrightSrc:
+          type: string
+        Keywords:
+          type: string
+        KeywordsSrc:
+          type: string
+        License:
+          type: string
+        LicenseSrc:
+          type: string
+        Notes:
+          type: string
+        NotesSrc:
+          type: string
+        Software:
+          type: string
+        SoftwareSrc:
+          type: string
+        Subject:
+          type: string
+        SubjectSrc:
+          type: string
+        createdAt:
+          type: string
+        photoID:
+          type: integer
+        updatedAt:
+          type: string
+    entity.File:
+      type: object
+      properties:
+        AspectRatio:
+          type: number
+        Chroma:
+          type: integer
+        Codec:
+          type: string
+        ColorProfile:
+          type: string
+        Colors:
+          type: string
+        CreatedAt:
+          type: string
+        CreatedIn:
+          type: integer
+        DeletedAt:
+          type: string
+        Diff:
+          type: integer
+        Duration:
+          $ref: '#/components/schemas/time.Duration'
+        Error:
+          type: string
+        FPS:
+          type: number
+        FileType:
+          type: string
+        Frames:
+          type: integer
+        HDR:
+          type: boolean
+        Hash:
+          type: string
+        Height:
+          type: integer
+        InstanceID:
+          type: string
+        Luminance:
+          type: string
+        MainColor:
+          type: string
+        MediaID:
+          type: string
+        MediaType:
+          type: string
+        MediaUTC:
+          type: integer
+        Mime:
+          type: string
+        Missing:
+          type: boolean
+        ModTime:
+          type: integer
+        Name:
+          type: string
+        Orientation:
+          type: integer
+        OrientationSrc:
+          type: string
+        OriginalName:
+          type: string
+        PhotoUID:
+          type: string
+        Portrait:
+          type: boolean
+        Primary:
+          type: boolean
+        Projection:
+          type: string
+        PublishedAt:
+          type: string
+        Root:
+          type: string
+        Sidecar:
+          type: boolean
+        Size:
+          type: integer
+        Software:
+          type: string
+        TakenAt:
+          type: string
+        TimeIndex:
+          type: string
+        UID:
+          type: string
+        UpdatedAt:
+          type: string
+        UpdatedIn:
+          type: integer
+        Video:
+          type: boolean
+        Watermark:
+          type: boolean
+        Width:
+          type: integer
+    entity.Label:
+      type: object
+      properties:
+        CreatedAt:
+          type: string
+        CustomSlug:
+          type: string
+        DeletedAt:
+          type: string
+        Description:
+          type: string
+        Favorite:
+          type: boolean
+        ID:
+          type: integer
+        Name:
+          type: string
+        Notes:
+          type: string
+        PhotoCount:
+          type: integer
+        Priority:
+          type: integer
+        PublishedAt:
+          type: string
+        Slug:
+          type: string
+        Thumb:
+          type: string
+        ThumbSrc:
+          type: string
+        UID:
+          type: string
+        UpdatedAt:
+          type: string
+    entity.Lens:
+      type: object
+      properties:
+        Description:
+          type: string
+        ID:
+          type: integer
+        Make:
+          type: string
+        Model:
+          type: string
+        Name:
+          type: string
+        Notes:
+          type: string
+        Slug:
+          type: string
+        Type:
+          type: string
+    entity.Person:
+      type: object
+      properties:
+        Alias:
+          type: string
+        Favorite:
+          type: boolean
+        Hidden:
+          type: boolean
+        Name:
+          type: string
+        UID:
+          type: string
+    entity.Photo:
+      type: object
+      properties:
+        Albums:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.Album'
+        Altitude:
+          type: integer
+        Camera:
+          $ref: '#/components/schemas/entity.Camera'
+        CameraID:
+          type: integer
+        CameraSerial:
+          type: string
+        CameraSrc:
+          type: string
+        Cell:
+          $ref: '#/components/schemas/entity.Cell'
+        CellAccuracy:
+          type: integer
+        CellID:
+          type: string
+        Color:
+          type: integer
+        Country:
+          type: string
+        CreatedBy:
+          type: string
+        Day:
+          type: integer
+        Description:
+          type: string
+        DescriptionSrc:
+          type: string
+        Details:
+          $ref: '#/components/schemas/entity.Details'
+        DocumentID:
+          type: string
+        Duration:
+          $ref: '#/components/schemas/time.Duration'
+        EstimatedAt:
+          type: string
+        Exposure:
+          type: string
+        FNumber:
+          type: number
+        Faces:
+          type: integer
+        Favorite:
+          type: boolean
+        FocalLength:
+          type: integer
+        Iso:
+          type: integer
+        Lat:
+          type: number
+        Lens:
+          $ref: '#/components/schemas/entity.Lens'
+        LensID:
+          type: integer
+        Lng:
+          type: number
+        Month:
+          type: integer
+        Name:
+          type: string
+        OriginalName:
+          type: string
+        Panorama:
+          type: boolean
+        Path:
+          type: string
+        Place:
+          $ref: '#/components/schemas/entity.Place'
+        PlaceID:
+          type: string
+        PlaceSrc:
+          type: string
+        Private:
+          type: boolean
+        PublishedAt:
+          type: string
+        Quality:
+          type: integer
+        Resolution:
+          type: integer
+        Scan:
+          type: boolean
+        Stack:
+          type: integer
+        TakenAt:
+          type: string
+        TakenAtLocal:
+          type: string
+        TakenSrc:
+          type: string
+        TimeZone:
+          type: string
+        Title:
+          type: string
+        TitleSrc:
+          type: string
+        Type:
+          type: string
+        TypeSrc:
+          type: string
+        UID:
+          type: string
+        Year:
+          type: integer
+        checkedAt:
+          type: string
+        createdAt:
+          type: string
+        deletedAt:
+          type: string
+        editedAt:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.File'
+        id:
+          type: integer
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.PhotoLabel'
+        updatedAt:
+          type: string
+    entity.PhotoLabel:
+      type: object
+      properties:
+        label:
+          $ref: '#/components/schemas/entity.Label'
+        labelID:
+          type: integer
+        labelSrc:
+          type: string
+        photo:
+          $ref: '#/components/schemas/entity.Photo'
+        photoID:
+          type: integer
+        uncertainty:
+          type: integer
+    entity.Place:
+      type: object
+      properties:
+        City:
+          type: string
+        Country:
+          type: string
+        CreatedAt:
+          type: string
+        District:
+          type: string
+        Favorite:
+          type: boolean
+        Keywords:
+          type: string
+        Label:
+          type: string
+        PhotoCount:
+          type: integer
+        PlaceID:
+          type: string
+        State:
+          type: string
+        UpdatedAt:
+          type: string
+    env.Resources:
+      type: object
+      properties:
+        cores:
+          type: integer
+        memory:
+          type: object
+          properties:
+            free:
+              type: integer
+            info:
+              type: string
+            reserved:
+              type: integer
+            total:
+              type: integer
+            used:
+              type: integer
+        routines:
+          type: integer
+    form.Album:
+      type: object
+      properties:
+        Caption:
+          type: string
+        Category:
+          type: string
+        Country:
+          type: string
+        Description:
+          type: string
+        Favorite:
+          type: boolean
+        Filter:
+          type: string
+        Location:
+          type: string
+        Notes:
+          type: string
+        Order:
+          type: string
+        Private:
+          type: boolean
+        Template:
+          type: string
+        Thumb:
+          type: string
+        ThumbSrc:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+    form.Details:
+      type: object
+      properties:
+        Artist:
+          type: string
+        ArtistSrc:
+          type: string
+        Copyright:
+          type: string
+        CopyrightSrc:
+          type: string
+        Keywords:
+          type: string
+        KeywordsSrc:
+          type: string
+        License:
+          type: string
+        LicenseSrc:
+          type: string
+        Notes:
+          type: string
+        NotesSrc:
+          type: string
+        PhotoID:
+          type: integer
+        Subject:
+          type: string
+        SubjectSrc:
+          type: string
+    form.Label:
+      type: object
+      properties:
+        Name:
+          type: string
+        Priority:
+          type: integer
+        Uncertainty:
+          type: integer
+    form.Photo:
+      type: object
+      properties:
+        Altitude:
+          type: integer
+        CameraID:
+          type: integer
+        CameraSrc:
+          type: string
+        CellAccuracy:
+          type: integer
+        CellID:
+          type: string
+        Country:
+          type: string
+        Day:
+          type: integer
+        Description:
+          type: string
+        DescriptionSrc:
+          type: string
+        Details:
+          $ref: '#/components/schemas/form.Details'
+        Exposure:
+          type: string
+        FNumber:
+          type: number
+        Favorite:
+          type: boolean
+        FocalLength:
+          type: integer
+        Iso:
+          type: integer
+        Lat:
+          type: number
+        LensID:
+          type: integer
+        Lng:
+          type: number
+        Month:
+          type: integer
+        OriginalName:
+          type: string
+        Panorama:
+          type: boolean
+        PlaceID:
+          type: string
+        PlaceSrc:
+          type: string
+        Private:
+          type: boolean
+        Scan:
+          type: boolean
+        Stack:
+          type: integer
+        TakenAt:
+          type: string
+        TakenAtLocal:
+          type: string
+        TakenSrc:
+          type: string
+        TimeZone:
+          type: string
+        Title:
+          type: string
+        TitleSrc:
+          type: string
+        Type:
+          type: string
+        TypeSrc:
+          type: string
+        Year:
+          type: integer
+    form.Selection:
+      type: object
+      properties:
+        albums:
+          type: array
+          items:
+            type: string
+        all:
+          type: boolean
+        files:
+          type: array
+          items:
+            type: string
+        labels:
+          type: array
+          items:
+            type: string
+        photos:
+          type: array
+          items:
+            type: string
+        places:
+          type: array
+          items:
+            type: string
+        subjects:
+          type: array
+          items:
+            type: string
+    gin.H:
+      type: object
+      additionalProperties:
+        type: object
+    i18n.Response:
+      type: object
+      properties:
+        code:
+          type: integer
+        details:
+          type: string
+        error:
+          type: string
+        message:
+          type: string
+    search.Album:
+      type: object
+      properties:
+        Caption:
+          type: string
+        Category:
+          type: string
+        Country:
+          type: string
+        CreatedAt:
+          type: string
+        Day:
+          type: integer
+        DeletedAt:
+          type: string
+        Description:
+          type: string
+        Favorite:
+          type: boolean
+        Filter:
+          type: string
+        LinkCount:
+          type: integer
+        Location:
+          type: string
+        Month:
+          type: integer
+        Notes:
+          type: string
+        Order:
+          type: string
+        ParentUID:
+          type: string
+        Path:
+          type: string
+        PhotoCount:
+          type: integer
+        Private:
+          type: boolean
+        Slug:
+          type: string
+        State:
+          type: string
+        Template:
+          type: string
+        Thumb:
+          type: string
+        ThumbSrc:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+        UID:
+          type: string
+        UpdatedAt:
+          type: string
+        Year:
+          type: integer
+    search.Photo:
+      type: object
+      properties:
+        Altitude:
+          type: integer
+        CameraID:
+          type: integer
+          description: Camera
+        CameraMake:
+          type: string
+        CameraModel:
+          type: string
+        CameraSerial:
+          type: string
+        CameraSrc:
+          type: string
+        CellAccuracy:
+          type: integer
+        CellID:
+          type: string
+          description: Cell
+        CheckedAt:
+          type: string
+        Color:
+          type: integer
+        Country:
+          type: string
+        CreatedAt:
+          type: string
+        Day:
+          type: integer
+        DeletedAt:
+          type: string
+        Description:
+          type: string
+        DocumentID:
+          type: string
+        Duration:
+          $ref: '#/components/schemas/time.Duration'
+        EditedAt:
+          type: string
+        Exposure:
+          type: string
+        FNumber:
+          type: number
+        Faces:
+          type: integer
+        Favorite:
+          type: boolean
+        FileName:
+          type: string
+        FileRoot:
+          type: string
+        FileUID:
+          type: string
+        Files:
+          type: array
+          items:
+            $ref: '#/components/schemas/entity.File'
+        FocalLength:
+          type: integer
+        Hash:
+          type: string
+        Height:
+          type: integer
+        ID:
+          type: string
+        InstanceID:
+          type: string
+        Iso:
+          type: integer
+        Lat:
+          type: number
+        LensID:
+          type: integer
+          description: Lens
+        LensMake:
+          type: string
+        LensModel:
+          type: string
+        Lng:
+          type: number
+        Merged:
+          type: boolean
+        Month:
+          type: integer
+        Name:
+          type: string
+        OriginalName:
+          type: string
+        Panorama:
+          type: boolean
+        Path:
+          type: string
+        PlaceCity:
+          type: string
+        PlaceCountry:
+          type: string
+        PlaceID:
+          type: string
+        PlaceLabel:
+          type: string
+        PlaceSrc:
+          type: string
+        PlaceState:
+          type: string
+        Portrait:
+          type: boolean
+        Private:
+          type: boolean
+        Quality:
+          type: integer
+        Resolution:
+          type: integer
+        Scan:
+          type: boolean
+        Stack:
+          type: integer
+        TakenAt:
+          type: string
+        TakenAtLocal:
+          type: string
+        TakenSrc:
+          type: string
+        TimeZone:
+          type: string
+        Title:
+          type: string
+        Type:
+          type: string
+        TypeSrc:
+          type: string
+        UID:
+          type: string
+        UpdatedAt:
+          type: string
+        Width:
+          type: integer
+        Year:
+          type: integer
+    time.Duration:
+      type: integer
+      x-enum-varnames:
+      - minDuration
+      - maxDuration
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+      - Hour
+      - minDuration
+      - maxDuration
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+      - Hour
+      - minDuration
+      - maxDuration
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+      - Hour
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+x-original-swagger-version: "2.0"

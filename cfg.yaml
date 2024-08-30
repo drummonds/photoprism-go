@@ -9,4 +9,4 @@ output-options:
   skip-prune: true
 import-mapping:
   # for a given file/URL that is $ref'd, point `oapi-codegen` to the Go package that this spec is generated into, to perform Go package imports
-  confluence.json: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/common
+  photoprism3.yaml: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/common
