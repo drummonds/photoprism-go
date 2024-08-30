@@ -1,4 +1,4 @@
-module github.com/drummonds/photoprism-go
+module github.com/drummonds/photoprism-go-api
 
 go 1.22.2
 

@@ -6,6 +6,20 @@ vars:
   GREETING: Hello, World!
 
 tasks:
+  get_api:
+    cmds:
+      - rm -f swagger.json 
+      - wget https://raw.githubusercontent.com/photoprism/photoprism/develop/internal/api/swagger.json
+
+  edit_api:
+    cmds:
+      - go run cmd/api_fmt/main.go 
+
+  convert_api:
+    cmds:
+      # There is https://editor.swagger.io/
+      - echo This is a manual step, copy  photoprism2.json to photprism3.json https://converter.swagger.io/
+
   test_openapi:
     cmds:
       - go run github.com/getkin/kin-openapi/cmd/validate@latest swagger.json 
@@ -14,25 +28,13 @@ tasks:
     cmds:
       - go generate api/generate.go
 
-  get_api:
-    cmds:
-      - rm -f swagger.json 
-      # - wget https://dac-static.atlassian.com/cloud/confluence/openapi-v2.v3.json
-      - wget https://raw.githubusercontent.com/photoprism/photoprism/develop/internal/api/swagger.json
-
-  edit_build:
-    cmds:
-      - go build cmd/api_fmt/main.go 
-
-  edit_api:
-    deps: [edit_build]
-    cmds:
-      - rm -f confluence.json 
-      - ./main
-
-  dia:
+  dia_start:
     cmds:
       - task: get_api
       - task: edit_api
+      - task: convert_api
+
+  dia_end:
+    cmds:
       - task: gen
       - go vet ./...

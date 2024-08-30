@@ -111,11 +111,25 @@ func main() {
 	Remove(jsonObj, "paths./api/v1/photos/{uid}/files/{file_uid}/unstack")
 	Remove(jsonObj, "paths./api/v1/photos/{uid}/label")
 	Remove(jsonObj, "paths./api/v1/photos/{uid}/like")
+	Remove(jsonObj, "paths./api/v1/subjects/{uid}/like")
+	Remove(jsonObj, "paths./api/v1/zip")
+	Remove(jsonObj, "paths./api/v1/{entity}/{uid}/links")
+	Remove(jsonObj, "paths./users/{uid}/upload/{token}")
+	Remove(jsonObj, "paths./api/v1/users/{uid}")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/avatar")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/passcode")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/passcode/activate")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/passcode/confirm")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/passcode/deactivate")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/password")
+	Remove(jsonObj, "paths./api/v1/users/{uid}/sessions")
+	Remove(jsonObj, "paths./api/v1/videos/{hash}/{token}/{format}")
 	Remove(jsonObj, "paths./api/v1/services")
 	Remove(jsonObj, "paths./api/v1/session")
 	Remove(jsonObj, "paths./api/v1/sessions")
-	// Remove(jsonObj, "paths.")
-	// Remove(jsonObj, "paths.")
+
+	// Following as cannot have a request body in openapi 3
+	Remove(jsonObj, "paths./api/v1/albums/{uid}/photos.delete")
 
 	// // Must use strings rather than ints
 	// RemoveAnyOff(jsonObj, "components.requestBodies.ContentIdToContentTypeRequest.content.application/json.schema.properties.contentIds.items")
@@ -142,7 +156,7 @@ func main() {
 
 	jsonOutput := jsonObj.StringIndent("", "  ")
 	// Becomes `{"outer":{"values":{"first":10,"second":11}},"outer2":"hello world"}`
-	err = os.WriteFile("photoprism.json", []byte(jsonOutput), 0644)
+	err = os.WriteFile("photoprism2.json", []byte(jsonOutput), 0644)
 	if err != nil {
 		panic(err)
 	}
