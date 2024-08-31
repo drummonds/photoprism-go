@@ -27,3 +27,6 @@ __debug_bin*
 
 # VS code
 .vscode
+
+# Specific to project
+temp.jpg

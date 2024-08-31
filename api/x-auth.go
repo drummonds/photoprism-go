@@ -15,5 +15,6 @@ func NewXAuthProvider(token string) *ClientToken {
 
 func (s *ClientToken) Intercept(ctx context.Context, req *http.Request) error {
 	req.Header.Set("X-Auth-Token", s.token)
+	// req.Header.Set("Authorization", "Bearer "+s.token)
 	return nil
 }
